@@ -1,3 +1,5 @@
+import puzzlesJson from './puzzles.json' assert { type: 'json' }
+
 export type CategoryColor = 'yellow' | 'green' | 'blue' | 'purple'
 
 export interface CategoryDefinition {
@@ -13,68 +15,7 @@ export interface ConnectionsPuzzle {
   mistakesAllowed?: number
 }
 
-const puzzlesByDate: Record<string, ConnectionsPuzzle> = {
-  '2024-10-07': {
-    date: '2024-10-07',
-    mistakesAllowed: 4,
-    categories: [
-      {
-        id: 'cooking-verbs',
-        title: 'Cooking actions',
-        color: 'yellow',
-        words: ['BAKE', 'BOIL', 'CHOP', 'STIR'],
-      },
-      {
-        id: 'kinds-of-house',
-        title: 'Words before "house"',
-        color: 'green',
-        words: ['TREE', 'DOG', 'WARE', 'LIGHT'],
-      },
-      {
-        id: 'social-groups',
-        title: 'Assemblies of people',
-        color: 'blue',
-        words: ['PACK', 'CLUB', 'BAND', 'SET'],
-      },
-      {
-        id: 'things-with-blades',
-        title: 'Things with blades',
-        color: 'purple',
-        words: ['FAN', 'SAW', 'SWORD', 'KNIFE'],
-      },
-    ],
-  },
-  '2024-10-08': {
-    date: '2024-10-08',
-    mistakesAllowed: 4,
-    categories: [
-      {
-        id: 'seasons',
-        title: 'Seasons of the year',
-        color: 'yellow',
-        words: ['SPRING', 'SUMMER', 'AUTUMN', 'WINTER'],
-      },
-      {
-        id: 'months',
-        title: 'Calendar months',
-        color: 'green',
-        words: ['MARCH', 'MAY', 'AUGUST', 'JUNE'],
-      },
-      {
-        id: 'music-terms',
-        title: 'Musical concepts',
-        color: 'blue',
-        words: ['PITCH', 'TONE', 'KEY', 'SCALE'],
-      },
-      {
-        id: 'classic-toys',
-        title: 'Classic toys',
-        color: 'purple',
-        words: ['SLINKY', 'YOYO', 'TOP', 'KITE'],
-      },
-    ],
-  },
-}
+const puzzlesByDate = puzzlesJson as Record<string, ConnectionsPuzzle>
 
 const puzzleKeys = Object.keys(puzzlesByDate).sort()
 
