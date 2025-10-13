@@ -31,19 +31,26 @@ const GameControls = ({
 );
 
 const Container = styled.div`
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
 `;
 
 const BaseButton = styled.button`
   border-radius: 999px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
-  padding: 12px 20px;
+  padding: 16px 24px;
   cursor: pointer;
   border: none;
   transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   &:disabled {
     cursor: not-allowed;
@@ -62,14 +69,15 @@ const PrimaryButton = styled(BaseButton)`
 `;
 
 const SecondaryButton = styled(BaseButton)`
-  background: #e4dfd3;
+  background: transparent;
   color: #1f1f1f;
+  border: 2px solid #1f1f1f;
 `;
 
 const TertiaryButton = styled(BaseButton)`
   background: transparent;
   color: #1f1f1f;
-  border: 1px solid #bfb8a6;
+  border: 2px solid #bfb8a6;
 `;
 
 export default GameControls;

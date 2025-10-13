@@ -32,21 +32,30 @@ const WordGrid = ({
 const Grid = styled.div`
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
 `
 
 const WordButton = styled.button<{ $selected: boolean }>`
-  padding: 18px 12px;
-  border-radius: 10px;
-  border: 2px solid ${({ $selected }) => ($selected ? '#1f1f1f' : '#c7c2b7')};
-  background: ${({ $selected }) => ($selected ? '#1f1f1f' : '#fffdf6')};
+  aspect-ratio: 1;
+  border-radius: 12px;
+  border: 3px solid ${({ $selected }) => ($selected ? '#1f1f1f' : '#c7c2b7')};
+  background: ${({ $selected }) => ($selected ? '#1f1f1f' : '#e2dfcf')};
   color: ${({ $selected }) => ($selected ? '#fff' : '#1f1f1f')};
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 0.8px;
+  font-size: clamp(14px, 2vw, 18px);
+  font-weight: 700;
+  letter-spacing: 0.4px;
   cursor: pointer;
   text-transform: uppercase;
-  transition: transform 120ms ease, box-shadow 120ms ease;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 12px;
+  line-height: 1.1;
 
   &:disabled {
     cursor: not-allowed;
@@ -60,6 +69,7 @@ const WordButton = styled.button<{ $selected: boolean }>`
   &:not(:disabled):hover {
     box-shadow: ${({ $selected }) =>
       $selected ? '0 4px 8px rgba(0, 0, 0, 0.2)' : '0 4px 12px rgba(0, 0, 0, 0.1)'};
+    border-color: ${({ $selected }) => ($selected ? '#1f1f1f' : '#a9a393')};
   }
 `
 
