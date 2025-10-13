@@ -1,10 +1,9 @@
-import { useMemo } from 'react'
-import { formatPuzzleDateLabel, selectPuzzleForDate } from './data/puzzles'
-import { useConnectionsGame } from './hooks/useConnectionsGame'
-import { GlobalStyle } from './styles/GlobalStyle'
+import { useMemo } from "react";
+import { formatPuzzleDateLabel, selectPuzzleForDate } from "./data/puzzles";
+import { useConnectionsGame } from "./hooks/useConnectionsGame";
+import { GlobalStyle } from "./styles/GlobalStyle";
 import {
   CategoryGroupList,
-  FeedbackBanner,
   GameControls,
   GameHeader,
   GameResult,
@@ -12,17 +11,16 @@ import {
   StatusBar,
   WordGrid,
   WordSection,
-} from './components'
+} from "./components";
 
 const App = () => {
-  const puzzleSelection = useMemo(() => selectPuzzleForDate(new Date()), [])
-  const { puzzle, key: puzzleKey } = puzzleSelection
+  const puzzleSelection = useMemo(() => selectPuzzleForDate(new Date()), []);
+  const { puzzle, key: puzzleKey } = puzzleSelection;
 
   const {
     remainingWords,
     orderedSolvedCategories,
     revealCategories,
-    feedback,
     status,
     mistakesAllowed,
     mistakesRemaining,
@@ -32,19 +30,21 @@ const App = () => {
     onToggleWord,
     clearSelection,
     submitSelection,
-  } = useConnectionsGame(puzzle)
+  } = useConnectionsGame(puzzle);
 
-  const isPlaying = status === 'playing'
-  const showWordSection = remainingWords.length > 0
-  const showGameResult = status !== 'playing'
-  const showFeedback = Boolean(feedback)
-  const showRevealGroups = revealCategories.length > 0
+  const isPlaying = status === "playing";
+  const showWordSection = remainingWords.length > 0;
+  const showGameResult = status !== "playing";
+  const showRevealGroups = revealCategories.length > 0;
 
   return (
     <>
       <GlobalStyle />
       <Page>
-        <GameHeader title="Connections" subtitle={formatPuzzleDateLabel(puzzleKey)} />
+        <GameHeader
+          title="Connections"
+          subtitle={formatPuzzleDateLabel(puzzleKey)}
+        />
 
         <StatusBar
           mistakesAllowed={mistakesAllowed}
@@ -52,8 +52,6 @@ const App = () => {
           solvedCount={solvedCategoryIds.length}
           totalCategories={puzzle.categories.length}
         />
-
-        {showFeedback && feedback ? <FeedbackBanner feedback={feedback} /> : null}
 
         {showGameResult ? <GameResult status={status} /> : null}
 
@@ -78,10 +76,12 @@ const App = () => {
           </WordSection>
         ) : null}
 
-        {showRevealGroups ? <CategoryGroupList categories={revealCategories} revealed /> : null}
+        {showRevealGroups ? (
+          <CategoryGroupList categories={revealCategories} revealed />
+        ) : null}
       </Page>
     </>
-  )
-}
+  );
+};
 
-export default App
+export default App;
