@@ -9,6 +9,7 @@ interface StatusBarProps {
 
 const StatusBar = ({ mistakesAllowed, mistakesRemaining }: StatusBarProps) => (
   <Container>
+    Mistakes Remaining:
     <MistakeTrack>
       {Array.from({ length: mistakesAllowed }).map((_, index) => {
         const pipActive = index < mistakesRemaining;
@@ -31,6 +32,7 @@ const Container = styled.section`
 const MistakeTrack = styled.div`
   display: flex;
   gap: 8px;
+  transform: translateY(1px);
 `;
 
 const MistakePip = styled.span<{ $active: boolean }>`
