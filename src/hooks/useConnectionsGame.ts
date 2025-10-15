@@ -63,12 +63,9 @@ export const useConnectionsGame = (
   const orderedSolvedCategories = useMemo(
     () =>
       solvedCategoryIds
-        .map((id) =>
-          puzzle.categories.find((category) => category.id === id),
-        )
+        .map((id) => puzzle.categories.find((category) => category.id === id))
         .filter(
-          (category): category is CategoryDefinition =>
-            category !== undefined,
+          (category): category is CategoryDefinition => category !== undefined,
         ),
     [solvedCategoryIds, puzzle.categories],
   );
@@ -117,7 +114,6 @@ export const useConnectionsGame = (
     }
 
     setAvailableWords((prev) => shuffle(prev));
-    setSelectedWordIds([]);
   };
 
   const clearSelection = () => {
