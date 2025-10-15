@@ -7,23 +7,14 @@ interface StatusBarProps {
   totalCategories: number;
 }
 
-const StatusBar = ({
-  mistakesAllowed,
-  mistakesRemaining,
-  solvedCount,
-  totalCategories,
-}: StatusBarProps) => (
+const StatusBar = ({ mistakesAllowed, mistakesRemaining }: StatusBarProps) => (
   <Container>
-    <MistakeLabel>Mistakes remaining</MistakeLabel>
     <MistakeTrack>
       {Array.from({ length: mistakesAllowed }).map((_, index) => {
         const pipActive = index < mistakesRemaining;
         return <MistakePip key={index} $active={pipActive} />;
       })}
     </MistakeTrack>
-    <ProgressText>
-      {solvedCount} / {totalCategories} solved
-    </ProgressText>
   </Container>
 );
 
@@ -37,11 +28,6 @@ const Container = styled.section`
   margin: 0 auto;
 `;
 
-const MistakeLabel = styled.span`
-  font-size: 14px;
-  color: #5d5d5d;
-`;
-
 const MistakeTrack = styled.div`
   display: flex;
   gap: 8px;
@@ -53,11 +39,6 @@ const MistakePip = styled.span<{ $active: boolean }>`
   border-radius: 50%;
   border: 1px solid #1f1f1f;
   background: ${({ $active }) => ($active ? "#f15c5c" : "#e4dfd3")};
-`;
-
-const ProgressText = styled.span`
-  font-size: 14px;
-  color: #333;
 `;
 
 export default StatusBar;

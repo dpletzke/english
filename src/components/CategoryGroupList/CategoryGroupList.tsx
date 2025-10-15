@@ -25,6 +25,9 @@ const CategoryGroupList = ({ categories, revealed = false }: CategoryGroupListPr
 const Container = styled.section`
   display: grid;
   gap: 10px;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
 `
 
 const GroupCard = styled.article<{ $color: CategoryColor; $revealed?: boolean }>`

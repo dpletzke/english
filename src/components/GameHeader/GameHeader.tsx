@@ -16,6 +16,9 @@ const Header = styled.header`
   display: flex;
   flex-direction: column;
   gap: 4px;
+  align-items: center;
+  text-align: center;
+  width: 100%;
 `
 
 const Title = styled.h1`

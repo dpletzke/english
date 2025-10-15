@@ -1,6 +1,7 @@
 export { Page } from "./Page";
 export { GameHeader } from "./GameHeader";
 export { StatusBar } from "./StatusBar";
+export { default as FeedbackBanner } from "./FeedbackBanner";
 export { GameResult } from "./GameResult";
 export { CategoryGroupList } from "./CategoryGroupList";
 export { WordGrid } from "./WordGrid";

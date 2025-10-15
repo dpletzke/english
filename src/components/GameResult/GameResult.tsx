@@ -21,6 +21,9 @@ const Container = styled.div<{ $status: GameStatus }>`
   border: 1px solid ${({ $status }) => ($status === 'won' ? '#68a663' : '#c26b6b')};
   font-weight: 600;
   text-align: center;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
 `
 
 export default GameResult
