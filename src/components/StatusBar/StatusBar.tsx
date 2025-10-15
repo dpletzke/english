@@ -9,7 +9,7 @@ interface StatusBarProps {
 
 const StatusBar = ({ mistakesAllowed, mistakesRemaining }: StatusBarProps) => (
   <Container>
-    Mistakes Remaining:
+    <Label>Mistakes Remaining: </Label>
     <MistakeTrack>
       {Array.from({ length: mistakesAllowed }).map((_, index) => {
         const pipActive = index < mistakesRemaining;
@@ -19,18 +19,21 @@ const StatusBar = ({ mistakesAllowed, mistakesRemaining }: StatusBarProps) => (
   </Container>
 );
 
+const Label = styled.p`
+  display: flex;
+  align-items: center;
+  line-height: 1;
+  font-size: 14px;
+`;
+
 const Container = styled.section`
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  width: 100%;
-  max-width: 520px;
-  margin: 0 auto;
+  gap: 12px;
 `;
 
 const MistakeTrack = styled.div`
-  display: flex;
+  display: inline-flex;
   gap: 8px;
   transform: translateY(1px);
 `;
