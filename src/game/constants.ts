@@ -1,0 +1,1 @@
+export const DEFAULT_MISTAKES_ALLOWED = 4;

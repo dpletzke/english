@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CategoryDefinition, ConnectionsPuzzle } from "../data/puzzles";
 import type { GameStatus, WordCard } from "../game/types";
+import { DEFAULT_MISTAKES_ALLOWED } from "../game/constants";
 import { orderedCategories, prepareWordCards, shuffle } from "../game/utils";
 
 interface UseConnectionsGameResult {
@@ -25,7 +26,7 @@ interface UseConnectionsGameResult {
 export const useConnectionsGame = (
   puzzle: ConnectionsPuzzle,
 ): UseConnectionsGameResult => {
-  const mistakesAllowed = puzzle.mistakesAllowed ?? 4;
+  const mistakesAllowed = DEFAULT_MISTAKES_ALLOWED;
 
   const [availableWords, setAvailableWords] = useState<WordCard[]>(() =>
     shuffle(prepareWordCards(puzzle)),

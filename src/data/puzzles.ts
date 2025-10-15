@@ -12,7 +12,6 @@ export interface CategoryDefinition {
 export interface ConnectionsPuzzle {
   date: string;
   categories: CategoryDefinition[];
-  mistakesAllowed?: number;
 }
 
 const puzzlesByDate = puzzlesJson as Record<string, ConnectionsPuzzle>;
