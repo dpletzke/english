@@ -61,8 +61,16 @@ export const useConnectionsGame = (
   );
 
   const orderedSolvedCategories = useMemo(
-    () => orderedCategories(solvedCategories),
-    [solvedCategories],
+    () =>
+      solvedCategoryIds
+        .map((id) =>
+          puzzle.categories.find((category) => category.id === id),
+        )
+        .filter(
+          (category): category is CategoryDefinition =>
+            category !== undefined,
+        ),
+    [solvedCategoryIds, puzzle.categories],
   );
 
   const orderedUnsolvedCategories = useMemo(
