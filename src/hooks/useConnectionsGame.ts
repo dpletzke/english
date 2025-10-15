@@ -29,7 +29,7 @@ export const useConnectionsGame = (
   const mistakesAllowed = DEFAULT_MISTAKES_ALLOWED;
 
   const [availableWords, setAvailableWords] = useState<WordCard[]>(() =>
-    shuffle(prepareWordCards(puzzle)),
+    prepareWordCards(puzzle),
   );
   const [selectedWordIds, setSelectedWordIds] = useState<string[]>([]);
   const [solvedCategoryIds, setSolvedCategoryIds] = useState<string[]>([]);
@@ -38,7 +38,7 @@ export const useConnectionsGame = (
   const [status, setStatus] = useState<GameStatus>("playing");
 
   useEffect(() => {
-    setAvailableWords(shuffle(prepareWordCards(puzzle)));
+    setAvailableWords(prepareWordCards(puzzle));
     setSelectedWordIds([]);
     setSolvedCategoryIds([]);
     setMistakesRemaining(mistakesAllowed);
