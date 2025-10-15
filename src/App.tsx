@@ -42,15 +42,8 @@ const App = () => {
       <GlobalStyle />
       <Page>
         <GameHeader
-          title="Connections"
+          title="English Learning Connections"
           subtitle={formatPuzzleDateLabel(puzzleKey)}
-        />
-
-        <StatusBar
-          mistakesAllowed={mistakesAllowed}
-          mistakesRemaining={mistakesRemaining}
-          solvedCount={solvedCategoryIds.length}
-          totalCategories={puzzle.categories.length}
         />
 
         {showGameResult ? <GameResult status={status} /> : null}
@@ -64,6 +57,12 @@ const App = () => {
               selectedWordIds={selectedWordIds}
               onToggleWord={onToggleWord}
               disabled={!isPlaying}
+            />
+            <StatusBar
+              mistakesAllowed={mistakesAllowed}
+              mistakesRemaining={mistakesRemaining}
+              solvedCount={solvedCategoryIds.length}
+              totalCategories={puzzle.categories.length}
             />
             <GameControls
               onSubmit={submitSelection}
