@@ -1,16 +1,9 @@
-import styled from 'styled-components'
+import styled from "styled-components";
 
 interface GameHeaderProps {
-  title: string
-  subtitle: string
+  title: string;
+  subtitle: string;
 }
-
-const GameHeader = ({ title, subtitle }: GameHeaderProps) => (
-  <Header>
-    <Title>{title}</Title>
-    <Subtitle>{subtitle}</Subtitle>
-  </Header>
-)
 
 const Header = styled.header`
   display: flex;
@@ -19,17 +12,24 @@ const Header = styled.header`
   align-items: center;
   text-align: center;
   width: 100%;
-`
+`;
 
 const Title = styled.h1`
   margin: 0;
   font-size: 32px;
   letter-spacing: 1px;
-`
+`;
 
 const Subtitle = styled.span`
   font-size: 16px;
   color: #5d5d5d;
-`
+`;
 
-export default GameHeader
+const GameHeader = ({ title, subtitle }: GameHeaderProps) => (
+  <Header>
+    <Title>{title}</Title>
+    <Subtitle>{subtitle}</Subtitle>
+  </Header>
+);
+
+export default GameHeader;

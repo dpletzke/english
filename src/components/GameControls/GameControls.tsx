@@ -9,27 +9,6 @@ interface GameControlsProps {
   canClear: boolean;
 }
 
-const GameControls = ({
-  onSubmit,
-  onShuffle,
-  onClear,
-  canSubmit,
-  canShuffle,
-  canClear,
-}: GameControlsProps) => (
-  <Container>
-    <SecondaryButton type="button" onClick={onShuffle} disabled={!canShuffle}>
-      Shuffle
-    </SecondaryButton>
-    <TertiaryButton type="button" onClick={onClear} disabled={!canClear}>
-      Deselect
-    </TertiaryButton>
-    <PrimaryButton type="button" onClick={onSubmit} disabled={!canSubmit}>
-      Submit
-    </PrimaryButton>
-  </Container>
-);
-
 const Container = styled.div`
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -79,5 +58,26 @@ const TertiaryButton = styled(BaseButton)`
   color: #1f1f1f;
   border: 2px solid #bfb8a6;
 `;
+
+const GameControls = ({
+  onSubmit,
+  onShuffle,
+  onClear,
+  canSubmit,
+  canShuffle,
+  canClear,
+}: GameControlsProps) => (
+  <Container>
+    <SecondaryButton type="button" onClick={onShuffle} disabled={!canShuffle}>
+      Shuffle
+    </SecondaryButton>
+    <TertiaryButton type="button" onClick={onClear} disabled={!canClear}>
+      Deselect
+    </TertiaryButton>
+    <PrimaryButton type="button" onClick={onSubmit} disabled={!canSubmit}>
+      Submit
+    </PrimaryButton>
+  </Container>
+);
 
 export default GameControls;
