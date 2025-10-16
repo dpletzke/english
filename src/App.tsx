@@ -48,14 +48,13 @@ const App = () => {
 
         {showGameResult ? <GameResult status={status} /> : null}
 
-        <CategoryGroupList categories={orderedSolvedCategories} />
-
         {showWordSection ? (
           <WordSection>
             <WordGrid
               words={remainingWords}
               selectedWordIds={selectedWordIds}
               onToggleWord={onToggleWord}
+              solvedCategories={orderedSolvedCategories}
               disabled={!isPlaying}
             />
             <StatusBar

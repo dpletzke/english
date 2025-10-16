@@ -16,8 +16,7 @@ const Container = styled.section`
 const Label = styled.p`
   display: flex;
   align-items: center;
-  line-height: 1;
-  font-size: 14px;
+  font-size: 15px;
 `;
 
 const MistakeTrack = styled.div`

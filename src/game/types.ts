@@ -1,4 +1,4 @@
-import type { CategoryColor } from "../data/puzzles";
+import type { CategoryColor, CategoryDefinition } from "../data/puzzles";
 
 export type GameStatus = "playing" | "won" | "lost";
 
@@ -8,3 +8,13 @@ export interface WordCard {
   categoryId: string;
   color: CategoryColor;
 }
+
+export type GuessFeedback =
+  | {
+      type: "correct";
+      category: CategoryDefinition;
+    }
+  | {
+      type: "incorrect";
+      remaining: number;
+    };
