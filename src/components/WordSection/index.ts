@@ -1,1 +1,1 @@
-export { default as WordSection } from './WordSection'
+export { default as WordSection } from "./WordSection";

@@ -25,7 +25,6 @@ const App = () => {
     mistakesAllowed,
     mistakesRemaining,
     selectedWordIds,
-    solvedCategoryIds,
     shuffleWords,
     onToggleWord,
     clearSelection,

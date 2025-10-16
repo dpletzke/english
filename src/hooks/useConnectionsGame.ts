@@ -6,13 +6,9 @@ import { orderedCategories, prepareWordCards, shuffle } from "../game/utils";
 
 interface UseConnectionsGameResult {
   availableWords: WordCard[];
-  solvedCategories: CategoryDefinition[];
   orderedSolvedCategories: CategoryDefinition[];
-  unsolvedCategories: CategoryDefinition[];
-  orderedUnsolvedCategories: CategoryDefinition[];
   revealCategories: CategoryDefinition[];
   selectedWordIds: string[];
-  solvedCategoryIds: string[];
   mistakesAllowed: number;
   mistakesRemaining: number;
   status: GameStatus;
@@ -49,16 +45,6 @@ export const useConnectionsGame = (
     [solvedCategoryIds],
   );
 
-  const solvedCategories = useMemo(
-    () => puzzle.categories.filter((category) => solvedSet.has(category.id)),
-    [puzzle.categories, solvedSet],
-  );
-
-  const unsolvedCategories = useMemo(
-    () => puzzle.categories.filter((category) => !solvedSet.has(category.id)),
-    [puzzle.categories, solvedSet],
-  );
-
   const orderedSolvedCategories = useMemo(
     () =>
       solvedCategoryIds
@@ -70,8 +56,11 @@ export const useConnectionsGame = (
   );
 
   const orderedUnsolvedCategories = useMemo(
-    () => orderedCategories(unsolvedCategories),
-    [unsolvedCategories],
+    () =>
+      orderedCategories(
+        puzzle.categories.filter((category) => !solvedSet.has(category.id)),
+      ),
+    [puzzle.categories, solvedSet],
   );
 
   const revealCategories = useMemo(
@@ -167,13 +156,9 @@ export const useConnectionsGame = (
 
   return {
     availableWords,
-    solvedCategories,
     orderedSolvedCategories,
-    unsolvedCategories,
-    orderedUnsolvedCategories,
     revealCategories,
     selectedWordIds,
-    solvedCategoryIds,
     mistakesAllowed,
     mistakesRemaining,
     status,
