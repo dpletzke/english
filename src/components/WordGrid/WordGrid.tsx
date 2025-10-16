@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from "framer-motion";
 import styled from "styled-components";
 import type { CategoryDefinition } from "../../data/puzzles";
 import { colorSwatches, colorTextOverrides } from "../../data/puzzles";
@@ -59,6 +60,15 @@ const SolvedCategoryWords = styled.div`
   letter-spacing: 0.5px;
 `;
 
+const WordSlot = styled(motion.div)`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+`;
+
 const WordButton = styled.button<{
   $selected: boolean;
   $length: LengthCategory;
@@ -84,7 +94,8 @@ const WordButton = styled.button<{
     }
   }};
   font-weight: 700;
-  letter-spacing: ${({ $length }) => ($length === "long" ? "0.18px" : "0.32px")};
+  letter-spacing: ${({ $length }) =>
+    $length === "long" ? "0.18px" : "0.32px"};
   cursor: pointer;
   text-transform: uppercase;
   transition:
@@ -100,7 +111,8 @@ const WordButton = styled.button<{
   line-height: ${({ $layout }) => ($layout === "double" ? 1.15 : 1.08)};
   white-space: ${({ $layout }) => ($layout === "double" ? "normal" : "nowrap")};
   flex-wrap: ${({ $layout }) => ($layout === "double" ? "wrap" : "nowrap")};
-  word-break: ${({ $layout }) => ($layout === "double" ? "break-word" : "normal")};
+  word-break: ${({ $layout }) =>
+    $layout === "double" ? "break-word" : "normal"};
   overflow-wrap: ${({ $layout }) =>
     $layout === "double" ? "anywhere" : "normal"};
   hyphens: ${({ $layout }) => ($layout === "double" ? "auto" : "none")};
@@ -156,19 +168,38 @@ const WordGrid = ({
         </SolvedCategoryWords>
       </SolvedCategoryTile>
     ))}
-    {words.map((card) => (
-      <WordButton
-        key={card.id}
-        type="button"
-        onClick={() => onToggleWord(card.id)}
-        $selected={selectedWordIds.includes(card.id)}
-        $length={getLengthCategory(card.label)}
-        $layout={getLayoutCategory(card.label)}
-        disabled={disabled}
-      >
-        {card.label}
-      </WordButton>
-    ))}
+    <AnimatePresence initial={false}>
+      {words.map((card) => (
+        <WordSlot
+          key={card.id}
+          layout
+          layoutId={card.id}
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{
+            opacity: 0,
+            scale: 0.9,
+            transition: { duration: 0.2, ease: "easeOut" },
+          }}
+          transition={{
+            duration: 0.25,
+            ease: "easeOut",
+            layout: { duration: 0.4, ease: "easeInOut" },
+          }}
+        >
+          <WordButton
+            type="button"
+            onClick={() => onToggleWord(card.id)}
+            $selected={selectedWordIds.includes(card.id)}
+            $length={getLengthCategory(card.label)}
+            $layout={getLayoutCategory(card.label)}
+            disabled={disabled}
+          >
+            {card.label}
+          </WordButton>
+        </WordSlot>
+      ))}
+    </AnimatePresence>
   </Grid>
 );
 

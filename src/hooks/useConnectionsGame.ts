@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CategoryDefinition, ConnectionsPuzzle } from "../data/puzzles";
 import type { GameStatus, WordCard } from "../game/types";
 import { DEFAULT_MISTAKES_ALLOWED } from "../game/constants";
@@ -18,6 +18,13 @@ interface UseConnectionsGameResult {
   submitSelection: () => void;
 }
 
+interface PendingSolve {
+  categoryId: string;
+  wordIds: string[];
+}
+
+const SOLVE_REVEAL_DELAY_MS = 600;
+
 export const useConnectionsGame = (
   puzzle: ConnectionsPuzzle,
 ): UseConnectionsGameResult => {
@@ -31,6 +38,8 @@ export const useConnectionsGame = (
   const [mistakesRemaining, setMistakesRemaining] =
     useState<number>(mistakesAllowed);
   const [status, setStatus] = useState<GameStatus>("playing");
+  const [pendingSolve, setPendingSolve] = useState<PendingSolve | null>(null);
+  const revealTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     setAvailableWords(prepareWordCards(puzzle));
@@ -38,7 +47,21 @@ export const useConnectionsGame = (
     setSolvedCategoryIds([]);
     setMistakesRemaining(mistakesAllowed);
     setStatus("playing");
+    setPendingSolve(null);
+    if (revealTimeoutRef.current !== null) {
+      window.clearTimeout(revealTimeoutRef.current);
+      revealTimeoutRef.current = null;
+    }
   }, [puzzle, mistakesAllowed]);
+
+  useEffect(
+    () => () => {
+      if (revealTimeoutRef.current !== null) {
+        window.clearTimeout(revealTimeoutRef.current);
+      }
+    },
+    [],
+  );
 
   const solvedSet = useMemo(
     () => new Set(solvedCategoryIds),
@@ -106,6 +129,9 @@ export const useConnectionsGame = (
     if (status !== "playing" || selectedWordIds.length !== 4) {
       return;
     }
+    if (pendingSolve) {
+      return;
+    }
 
     const selectedCards = availableWords.filter((card) =>
       selectedWordIds.includes(card.id),
@@ -130,17 +156,38 @@ export const useConnectionsGame = (
       targetCategoryId &&
       !solvedSet.has(targetCategoryId)
     ) {
-      setAvailableWords((prev) =>
-        prev.filter((card) => card.categoryId !== targetCategoryId),
-      );
-      setSolvedCategoryIds((prev) => {
-        const next = [...prev, targetCategoryId];
-        if (next.length === puzzle.categories.length) {
-          setStatus("won");
-        }
+      const solvedWordIds = selectedCards.map((card) => card.id);
+      setPendingSolve({ categoryId: targetCategoryId, wordIds: solvedWordIds });
+      setAvailableWords((prev) => {
+        const next = [...prev];
+        next.sort((a, b) => {
+          const aSolved = solvedWordIds.includes(a.id);
+          const bSolved = solvedWordIds.includes(b.id);
+          if (aSolved === bSolved) {
+            return 0;
+          }
+          return aSolved ? -1 : 1;
+        });
         return next;
       });
       setSelectedWordIds([]);
+      if (revealTimeoutRef.current !== null) {
+        window.clearTimeout(revealTimeoutRef.current);
+      }
+      revealTimeoutRef.current = window.setTimeout(() => {
+        setAvailableWords((prev) =>
+          prev.filter((card) => !solvedWordIds.includes(card.id)),
+        );
+        setSolvedCategoryIds((prev) => {
+          const next = [...prev, targetCategoryId];
+          if (next.length === puzzle.categories.length) {
+            setStatus("won");
+          }
+          return next;
+        });
+        setPendingSolve(null);
+        revealTimeoutRef.current = null;
+      }, SOLVE_REVEAL_DELAY_MS);
       return;
     }
 
