@@ -25,7 +25,10 @@ const BaseButton = styled.button`
   padding: 16px 24px;
   cursor: pointer;
   border: none;
-  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    opacity 120ms ease;
   min-height: 52px;
   display: inline-flex;
   align-items: center;

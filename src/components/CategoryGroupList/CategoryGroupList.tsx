@@ -15,7 +15,10 @@ const Container = styled.section`
   margin: 0 auto;
 `;
 
-const GroupCard = styled.article<{ $color: CategoryColor; $revealed?: boolean }>`
+const GroupCard = styled.article<{
+  $color: CategoryColor;
+  $revealed?: boolean;
+}>`
   border-radius: 12px;
   padding: 16px 18px;
   display: flex;

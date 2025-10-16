@@ -54,7 +54,9 @@ const CloseButton = styled.button`
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
-  transition: opacity 120ms ease, transform 120ms ease;
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
 
   &:hover {
     opacity: 0.9;

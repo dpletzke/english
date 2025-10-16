@@ -1,1 +1,1 @@
-export { default as CategoryGroupList } from './CategoryGroupList'
+export { default as CategoryGroupList } from "./CategoryGroupList";

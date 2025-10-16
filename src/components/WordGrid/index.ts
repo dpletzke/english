@@ -1,1 +1,1 @@
-export { default as WordGrid } from './WordGrid'
+export { default as WordGrid } from "./WordGrid";

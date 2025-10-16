@@ -2,10 +2,15 @@ import type {
   CategoryColor,
   CategoryDefinition,
   ConnectionsPuzzle,
-} from '../data/puzzles'
-import type { WordCard } from './types'
+} from "../data/puzzles";
+import type { WordCard } from "./types";
 
-export const colorOrder: CategoryColor[] = ['yellow', 'green', 'blue', 'purple']
+export const colorOrder: CategoryColor[] = [
+  "yellow",
+  "green",
+  "blue",
+  "purple",
+];
 
 export const prepareWordCards = (puzzle: ConnectionsPuzzle): WordCard[] => {
   const cards = puzzle.categories.flatMap((category) =>
@@ -15,45 +20,45 @@ export const prepareWordCards = (puzzle: ConnectionsPuzzle): WordCard[] => {
       categoryId: category.id,
       color: category.color,
     })),
-  )
+  );
 
-  const startingOrder = puzzle['starting order']
+  const startingOrder = puzzle["starting order"];
   if (!startingOrder?.length) {
-    return cards
+    return cards;
   }
 
-  const cardByLabel = new Map(cards.map((card) => [card.label, card]))
-  const orderedCards: WordCard[] = []
+  const cardByLabel = new Map(cards.map((card) => [card.label, card]));
+  const orderedCards: WordCard[] = [];
 
   startingOrder.forEach((word) => {
-    const card = cardByLabel.get(word)
+    const card = cardByLabel.get(word);
     if (card) {
-      orderedCards.push(card)
-      cardByLabel.delete(word)
+      orderedCards.push(card);
+      cardByLabel.delete(word);
     }
-  })
+  });
 
   if (cardByLabel.size > 0) {
-    orderedCards.push(...cardByLabel.values())
+    orderedCards.push(...cardByLabel.values());
   }
 
-  return orderedCards
-}
+  return orderedCards;
+};
 
-export const shuffle = <T,>(items: T[]): T[] => {
-  const copy = [...items]
+export const shuffle = <T>(items: T[]): T[] => {
+  const copy = [...items];
   for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
   }
-  return copy
-}
+  return copy;
+};
 
 export const orderedCategories = (categories: CategoryDefinition[]) =>
   [...categories].sort((a, b) => {
-    const colorRank = colorOrder.indexOf(a.color) - colorOrder.indexOf(b.color)
+    const colorRank = colorOrder.indexOf(a.color) - colorOrder.indexOf(b.color);
     if (colorRank !== 0) {
-      return colorRank
+      return colorRank;
     }
-    return a.title.localeCompare(b.title)
-  })
+    return a.title.localeCompare(b.title);
+  });

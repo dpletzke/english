@@ -23,7 +23,9 @@ const Grid = styled.div`
   margin: 0 auto;
 `;
 
-const SolvedCategoryTile = styled.article<{ $color: CategoryDefinition["color"] }>`
+const SolvedCategoryTile = styled.article<{
+  $color: CategoryDefinition["color"];
+}>`
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
@@ -66,7 +68,9 @@ const WordButton = styled.button<{ $selected: boolean }>`
   letter-spacing: 0.4px;
   cursor: pointer;
   text-transform: uppercase;
-  transition: transform 120ms ease, box-shadow 120ms ease,
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
     border-color 120ms ease;
   display: flex;
   align-items: center;

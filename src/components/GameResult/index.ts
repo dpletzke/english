@@ -1,1 +1,1 @@
-export { default as GameResult } from './GameResult'
+export { default as GameResult } from "./GameResult";
