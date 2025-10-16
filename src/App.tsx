@@ -33,7 +33,9 @@ const App = () => {
   } = useConnectionsGame(puzzle);
 
   const isPlaying = status === "playing";
-  const showWordSection = remainingWords.length > 0;
+  const hasGridContent =
+    remainingWords.length > 0 || orderedSolvedCategories.length > 0;
+  const showWordSection = hasGridContent;
   const showGameResult = status !== "playing";
   const showRevealGroups = revealCategories.length > 0;
 
