@@ -23,12 +23,15 @@ const MistakeTrack = styled.div`
   transform: translateY(1px);
 `;
 
-const MistakePip = styled.span<{ $active: boolean }>`
+const MistakePip = styled.span.attrs<{ $active: boolean }>(({ $active }) => ({
+  role: "img",
+  "aria-label": $active ? "mistake remaining" : "mistake used",
+}))<{ $active: boolean }>`
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 1px solid #1f1f1f;
-  background: ${({ $active }) => ($active ? "#f15c5c" : "#e4dfd3")};
+  border: 1px solid rgba(46, 39, 27, 0.4);
+  background: ${({ $active }) => ($active ? "#e36363" : "rgba(255, 255, 255, 0.7)")};
 `;
 
 const StatusBar = ({ mistakesAllowed, mistakesRemaining }: StatusBarProps) => (
