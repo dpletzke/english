@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatPuzzleDateLabel, selectPuzzleForDate } from "./data/puzzles";
 import { useConnectionsGame } from "./hooks/useConnectionsGame";
 import { GlobalStyle } from "./styles/GlobalStyle";
@@ -18,7 +18,7 @@ const App = () => {
   const { puzzle, key: puzzleKey } = puzzleSelection;
 
   const {
-    remainingWords,
+    availableWords,
     orderedSolvedCategories,
     revealCategories,
     status,
@@ -32,12 +32,27 @@ const App = () => {
     submitSelection,
   } = useConnectionsGame(puzzle);
 
+  const [isResultOpen, setIsResultOpen] = useState(false);
+
+  useEffect(() => {
+    if (status === "playing") {
+      setIsResultOpen(false);
+      return;
+    }
+
+    setIsResultOpen(true);
+  }, [status]);
+
   const isPlaying = status === "playing";
   const hasGridContent =
-    remainingWords.length > 0 || orderedSolvedCategories.length > 0;
+    availableWords.length > 0 || orderedSolvedCategories.length > 0;
   const showWordSection = hasGridContent;
-  const showGameResult = status !== "playing";
+  const showGameResult = status !== "playing" && isResultOpen;
   const showRevealGroups = revealCategories.length > 0;
+
+  const handleCloseResult = () => {
+    setIsResultOpen(false);
+  };
 
   return (
     <>
@@ -48,12 +63,14 @@ const App = () => {
           subtitle={formatPuzzleDateLabel(puzzleKey)}
         />
 
-        {showGameResult ? <GameResult status={status} /> : null}
+        {showGameResult ? (
+          <GameResult status={status} onClose={handleCloseResult} />
+        ) : null}
 
         {showWordSection ? (
           <WordSection>
             <WordGrid
-              words={remainingWords}
+              words={availableWords}
               selectedWordIds={selectedWordIds}
               onToggleWord={onToggleWord}
               solvedCategories={orderedSolvedCategories}

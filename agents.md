@@ -49,7 +49,7 @@ public/                  // Static assets
 
 - **Type Safety First**: Prefer deriving types from data (e.g., `CategoryDefinition`) and surface them through props. Avoid `any`.
 - **Pure Logic vs UI**: Keep business rules in `/game` and `/hooks`. Components should stay presentational and read values via props.
-- **Declarative State**: Let derived state (`remainingWords`, `revealCategories`) live in memoized selectors inside the hook instead of recomputing in components.
+- **Declarative State**: Let derived state (e.g., `revealCategories`) live in memoized selectors inside the hook instead of recomputing in components.
 - **Minimal Side Effects**: Side effects should be isolated (e.g., the `useEffect` that resets state on puzzle change). New effects must reset all dependent state slices.
 - **Styling**: Stick to styled-components with theme-friendly values. Favor functional class names and small reusable primitives.
 

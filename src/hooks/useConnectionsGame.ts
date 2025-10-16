@@ -6,7 +6,6 @@ import { orderedCategories, prepareWordCards, shuffle } from "../game/utils";
 
 interface UseConnectionsGameResult {
   availableWords: WordCard[];
-  remainingWords: WordCard[];
   solvedCategories: CategoryDefinition[];
   orderedSolvedCategories: CategoryDefinition[];
   unsolvedCategories: CategoryDefinition[];
@@ -73,16 +72,6 @@ export const useConnectionsGame = (
   const orderedUnsolvedCategories = useMemo(
     () => orderedCategories(unsolvedCategories),
     [unsolvedCategories],
-  );
-
-  const activeWords = useMemo(
-    () => availableWords.filter((card) => !solvedSet.has(card.categoryId)),
-    [availableWords, solvedSet],
-  );
-
-  const remainingWords = useMemo(
-    () => (status === "lost" ? [] : activeWords),
-    [status, activeWords],
   );
 
   const revealCategories = useMemo(
@@ -178,7 +167,6 @@ export const useConnectionsGame = (
 
   return {
     availableWords,
-    remainingWords,
     solvedCategories,
     orderedSolvedCategories,
     unsolvedCategories,
