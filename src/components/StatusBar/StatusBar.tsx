@@ -3,8 +3,6 @@ import styled from "styled-components";
 interface StatusBarProps {
   mistakesAllowed: number;
   mistakesRemaining: number;
-  solvedCount: number;
-  totalCategories: number;
 }
 
 const Container = styled.section`

@@ -79,8 +79,6 @@ const App = () => {
             <StatusBar
               mistakesAllowed={mistakesAllowed}
               mistakesRemaining={mistakesRemaining}
-              solvedCount={solvedCategoryIds.length}
-              totalCategories={puzzle.categories.length}
             />
             <GameControls
               onSubmit={submitSelection}
