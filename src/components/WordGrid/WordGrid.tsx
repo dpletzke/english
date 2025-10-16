@@ -3,6 +3,9 @@ import type { CategoryDefinition } from "../../data/puzzles";
 import { colorSwatches, colorTextOverrides } from "../../data/puzzles";
 import type { WordCard } from "../../game/types";
 
+type LengthCategory = "short" | "medium" | "long";
+type WordLayoutCategory = "single" | "double";
+
 interface WordGridProps {
   words: WordCard[];
   selectedWordIds: string[];
@@ -56,16 +59,32 @@ const SolvedCategoryWords = styled.div`
   letter-spacing: 0.5px;
 `;
 
-const WordButton = styled.button<{ $selected: boolean }>`
+const WordButton = styled.button<{
+  $selected: boolean;
+  $length: LengthCategory;
+  $layout: WordLayoutCategory;
+}>`
   width: 100%;
   height: 100%;
   border-radius: 12px;
   border: 3px solid ${({ $selected }) => ($selected ? "#1f1f1f" : "#c7c2b7")};
   background: ${({ $selected }) => ($selected ? "#1f1f1f" : "#e2dfcf")};
   color: ${({ $selected }) => ($selected ? "#fff" : "#1f1f1f")};
-  font-size: clamp(12px, 2.4vh, 18px);
+  font-size: ${({ $length, $layout }) => {
+    if ($layout === "double") {
+      return "clamp(11px, 1.9vh, 16px)";
+    }
+    switch ($length) {
+      case "long":
+        return "clamp(10px, 1.6vh, 14px)";
+      case "medium":
+        return "clamp(11px, 1.85vh, 15px)";
+      default:
+        return "clamp(12px, 2.2vh, 17px)";
+    }
+  }};
   font-weight: 700;
-  letter-spacing: 0.4px;
+  letter-spacing: ${({ $length }) => ($length === "long" ? "0.18px" : "0.32px")};
   cursor: pointer;
   text-transform: uppercase;
   transition:
@@ -76,8 +95,15 @@ const WordButton = styled.button<{ $selected: boolean }>`
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 0 12px;
-  line-height: 1.1;
+  padding-block: clamp(7px, 1.6vh, 12px);
+  padding-inline: clamp(12px, 2.6vw, 22px);
+  line-height: ${({ $layout }) => ($layout === "double" ? 1.15 : 1.08)};
+  white-space: ${({ $layout }) => ($layout === "double" ? "normal" : "nowrap")};
+  flex-wrap: ${({ $layout }) => ($layout === "double" ? "wrap" : "nowrap")};
+  word-break: ${({ $layout }) => ($layout === "double" ? "break-word" : "normal")};
+  overflow-wrap: ${({ $layout }) =>
+    $layout === "double" ? "anywhere" : "normal"};
+  hyphens: ${({ $layout }) => ($layout === "double" ? "auto" : "none")};
 
   &:disabled {
     cursor: not-allowed;
@@ -96,6 +122,21 @@ const WordButton = styled.button<{ $selected: boolean }>`
     border-color: ${({ $selected }) => ($selected ? "#1f1f1f" : "#a9a393")};
   }
 `;
+
+const getLengthCategory = (label: string): LengthCategory => {
+  const condensedLength = label.replace(/\s+/g, "").length;
+  if (condensedLength >= 11) {
+    return "long";
+  }
+  if (condensedLength >= 7) {
+    return "medium";
+  }
+  return "short";
+};
+
+const getLayoutCategory = (label: string): WordLayoutCategory => {
+  return label.trim().split(/\s+/).length === 2 ? "double" : "single";
+};
 
 const WordGrid = ({
   words,
@@ -121,6 +162,8 @@ const WordGrid = ({
         type="button"
         onClick={() => onToggleWord(card.id)}
         $selected={selectedWordIds.includes(card.id)}
+        $length={getLengthCategory(card.label)}
+        $layout={getLayoutCategory(card.label)}
         disabled={disabled}
       >
         {card.label}
