@@ -13,6 +13,7 @@ interface UseConnectionsGameResult {
   mistakesRemaining: number;
   status: GameStatus;
   onToggleWord: (wordId: string) => void;
+  reorderWords: (nextOrder: WordCard[]) => void;
   shuffleWords: () => void;
   clearSelection: () => void;
   submitSelection: () => void;
@@ -117,6 +118,16 @@ export const useConnectionsGame = (
     setAvailableWords((prev) => shuffle(prev));
   };
 
+  const reorderWords = (nextOrder: WordCard[]) => {
+    if (status !== "playing") {
+      return;
+    }
+    if (pendingSolve) {
+      return;
+    }
+    setAvailableWords(nextOrder);
+  };
+
   const clearSelection = () => {
     if (status !== "playing") {
       return;
@@ -210,6 +221,7 @@ export const useConnectionsGame = (
     mistakesRemaining,
     status,
     onToggleWord,
+    reorderWords,
     shuffleWords,
     clearSelection,
     submitSelection,

@@ -25,6 +25,7 @@ const App = () => {
     mistakesAllowed,
     mistakesRemaining,
     selectedWordIds,
+    reorderWords,
     shuffleWords,
     onToggleWord,
     clearSelection,
@@ -72,6 +73,7 @@ const App = () => {
               words={availableWords}
               selectedWordIds={selectedWordIds}
               onToggleWord={onToggleWord}
+              onReorderWords={reorderWords}
               solvedCategories={orderedSolvedCategories}
               disabled={!isPlaying}
             />

@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { Reorder } from "framer-motion";
 import styled from "styled-components";
 import type { CategoryDefinition } from "../../data/puzzles";
 import { colorSwatches, colorTextOverrides } from "../../data/puzzles";
@@ -11,6 +11,7 @@ interface WordGridProps {
   words: WordCard[];
   selectedWordIds: string[];
   onToggleWord: (wordId: string) => void;
+  onReorderWords?: (nextOrder: WordCard[]) => void;
   solvedCategories: CategoryDefinition[];
   disabled?: boolean;
 }
@@ -60,7 +61,11 @@ const SolvedCategoryWords = styled.div`
   letter-spacing: 0.5px;
 `;
 
-const WordSlot = styled(motion.div)`
+const WordList = styled(Reorder.Group)`
+  display: contents;
+`;
+
+const WordItem = styled(Reorder.Item)`
   position: relative;
   width: 100%;
   height: 100%;
@@ -150,57 +155,67 @@ const getLayoutCategory = (label: string): WordLayoutCategory => {
   return label.trim().split(/\s+/).length === 2 ? "double" : "single";
 };
 
+const noopReorder: (nextOrder: WordCard[]) => void = () => {
+  /* no-op */
+};
+
 const WordGrid = ({
   words,
   selectedWordIds,
   onToggleWord,
+  onReorderWords,
   solvedCategories,
   disabled = false,
-}: WordGridProps) => (
-  <Grid>
-    {solvedCategories.map((category) => (
-      <SolvedCategoryTile key={`solved-${category.id}`} $color={category.color}>
-        <SolvedCategoryTitle>{category.title}</SolvedCategoryTitle>
-        <SolvedCategoryWords>
-          {category.words.map((word) => (
-            <span key={word}>{word}</span>
-          ))}
-        </SolvedCategoryWords>
-      </SolvedCategoryTile>
-    ))}
-    <AnimatePresence initial={false}>
-      {words.map((card) => (
-        <WordSlot
-          key={card.id}
-          layout
-          layoutId={card.id}
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{
-            opacity: 0,
-            scale: 0.9,
-            transition: { duration: 0.2, ease: "easeOut" },
-          }}
-          transition={{
-            duration: 0.25,
-            ease: "easeOut",
-            layout: { duration: 0.4, ease: "easeInOut" },
-          }}
-        >
-          <WordButton
-            type="button"
-            onClick={() => onToggleWord(card.id)}
-            $selected={selectedWordIds.includes(card.id)}
-            $length={getLengthCategory(card.label)}
-            $layout={getLayoutCategory(card.label)}
-            disabled={disabled}
-          >
-            {card.label}
-          </WordButton>
-        </WordSlot>
+}: WordGridProps) => {
+  const handleReorder = onReorderWords ?? noopReorder;
+
+  return (
+    <Grid>
+      {solvedCategories.map((category) => (
+        <SolvedCategoryTile key={`solved-${category.id}`} $color={category.color}>
+          <SolvedCategoryTitle>{category.title}</SolvedCategoryTitle>
+          <SolvedCategoryWords>
+            {category.words.map((word) => (
+              <span key={word}>{word}</span>
+            ))}
+          </SolvedCategoryWords>
+        </SolvedCategoryTile>
       ))}
-    </AnimatePresence>
-  </Grid>
-);
+      <WordList
+        axis="y"
+        values={words}
+        onReorder={(order) => handleReorder(order as WordCard[])}
+        layoutScroll
+      >
+        {words.map((card) => (
+          <WordItem
+            key={card.id}
+            value={card}
+            layoutId={card.id}
+            transition={{
+              layout: { duration: 0.4, ease: "easeInOut" },
+              opacity: { duration: 0.18 },
+              scale: { duration: 0.18 },
+            }}
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            drag={false}
+          >
+            <WordButton
+              type="button"
+              onClick={() => onToggleWord(card.id)}
+              $selected={selectedWordIds.includes(card.id)}
+              $length={getLengthCategory(card.label)}
+              $layout={getLayoutCategory(card.label)}
+              disabled={disabled}
+            >
+              {card.label}
+            </WordButton>
+          </WordItem>
+        ))}
+      </WordList>
+    </Grid>
+  );
+};
 
 export default WordGrid;
