@@ -1,11 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CategoryDefinition, ConnectionsPuzzle } from "../data/puzzles";
-import type { GameStatus, WordCard } from "../game/types";
+import type {
+  GameStatus,
+  WordCard,
+  WordCardFeedbackMap,
+  WordCardFeedbackStatus,
+} from "../game/types";
 import { DEFAULT_MISTAKES_ALLOWED } from "../game/constants";
 import { orderedCategories, prepareWordCards, shuffle } from "../game/utils";
+import { HOP_TIMING, computeRevealDelay } from "./useConnectionsGame/timing";
+import {
+  clearTimeoutCollection,
+  clearTimeoutRef,
+} from "./useConnectionsGame/timeouts";
+import { runHopSequence } from "./useConnectionsGame/hopSequence";
 
 interface UseConnectionsGameResult {
   availableWords: WordCard[];
+  wordFeedback: WordCardFeedbackMap;
   orderedSolvedCategories: CategoryDefinition[];
   revealCategories: CategoryDefinition[];
   selectedWordIds: string[];
@@ -24,8 +36,6 @@ interface PendingSolve {
   wordIds: string[];
 }
 
-const SOLVE_REVEAL_DELAY_MS = 600;
-
 export const useConnectionsGame = (
   puzzle: ConnectionsPuzzle,
 ): UseConnectionsGameResult => {
@@ -41,6 +51,28 @@ export const useConnectionsGame = (
   const [status, setStatus] = useState<GameStatus>("playing");
   const [pendingSolve, setPendingSolve] = useState<PendingSolve | null>(null);
   const revealTimeoutRef = useRef<number | null>(null);
+  const solveSortTimeoutRef = useRef<number | null>(null);
+  const hopTimeoutsRef = useRef<number[]>([]);
+  const followupTimeoutsRef = useRef<number[]>([]);
+  const [wordFeedback, setWordFeedback] = useState<WordCardFeedbackMap>({});
+
+  const clearRevealTimeout = () => clearTimeoutRef(revealTimeoutRef);
+  const clearSolveSortTimeout = () => clearTimeoutRef(solveSortTimeoutRef);
+  const clearHopTimeouts = () => clearTimeoutCollection(hopTimeoutsRef);
+  const clearFollowupTimeouts = () => clearTimeoutCollection(followupTimeoutsRef);
+
+  const setFeedbackForIds = (ids: string[], status: WordCardFeedbackStatus) => {
+    if (ids.length === 0) {
+      return;
+    }
+    setWordFeedback((prev) => {
+      const next: WordCardFeedbackMap = { ...prev };
+      ids.forEach((id) => {
+        next[id] = status;
+      });
+      return next;
+    });
+  };
 
   useEffect(() => {
     setAvailableWords(prepareWordCards(puzzle));
@@ -49,17 +81,19 @@ export const useConnectionsGame = (
     setMistakesRemaining(mistakesAllowed);
     setStatus("playing");
     setPendingSolve(null);
-    if (revealTimeoutRef.current !== null) {
-      window.clearTimeout(revealTimeoutRef.current);
-      revealTimeoutRef.current = null;
-    }
+    setWordFeedback({});
+    clearRevealTimeout();
+    clearSolveSortTimeout();
+    clearFollowupTimeouts();
+    clearHopTimeouts();
   }, [puzzle, mistakesAllowed]);
 
   useEffect(
     () => () => {
-      if (revealTimeoutRef.current !== null) {
-        window.clearTimeout(revealTimeoutRef.current);
-      }
+      clearRevealTimeout();
+      clearSolveSortTimeout();
+      clearFollowupTimeouts();
+      clearHopTimeouts();
     },
     [],
   );
@@ -99,6 +133,7 @@ export const useConnectionsGame = (
 
     setSelectedWordIds((prev) => {
       if (prev.includes(wordId)) {
+        setFeedbackForIds([wordId], "idle");
         return prev.filter((id) => id !== wordId);
       }
 
@@ -106,6 +141,7 @@ export const useConnectionsGame = (
         return prev;
       }
 
+      setFeedbackForIds([wordId], "idle");
       return [...prev, wordId];
     });
   };
@@ -116,6 +152,7 @@ export const useConnectionsGame = (
     }
 
     setAvailableWords((prev) => shuffle(prev));
+    setFeedbackForIds(selectedWordIds, "idle");
   };
 
   const reorderWords = (nextOrder: WordCard[]) => {
@@ -133,6 +170,9 @@ export const useConnectionsGame = (
       return;
     }
 
+    if (selectedWordIds.length > 0) {
+      setFeedbackForIds(selectedWordIds, "idle");
+    }
     setSelectedWordIds([]);
   };
 
@@ -143,9 +183,9 @@ export const useConnectionsGame = (
     if (pendingSolve) {
       return;
     }
-
+    const candidateWordIds = [...selectedWordIds];
     const selectedCards = availableWords.filter((card) =>
-      selectedWordIds.includes(card.id),
+      candidateWordIds.includes(card.id),
     );
 
     if (selectedCards.length !== 4) {
@@ -168,24 +208,48 @@ export const useConnectionsGame = (
       !solvedSet.has(targetCategoryId)
     ) {
       const solvedWordIds = selectedCards.map((card) => card.id);
-      setPendingSolve({ categoryId: targetCategoryId, wordIds: solvedWordIds });
-      setAvailableWords((prev) => {
-        const next = [...prev];
-        next.sort((a, b) => {
-          const aSolved = solvedWordIds.includes(a.id);
-          const bSolved = solvedWordIds.includes(b.id);
-          if (aSolved === bSolved) {
-            return 0;
-          }
-          return aSolved ? -1 : 1;
-        });
-        return next;
+      const { completionDelayMs } = runHopSequence({
+        ids: solvedWordIds,
+        availableWords,
+        setFeedback: setFeedbackForIds,
+        hopTimeoutsRef,
+        followupTimeoutsRef,
+        finishStatus: "lift",
+        finishPaddingMs: HOP_TIMING.hopToLiftPaddingMs,
       });
+      setPendingSolve({ categoryId: targetCategoryId, wordIds: solvedWordIds });
+      const applySolvedOrdering = () => {
+        setAvailableWords((prev) => {
+          const next = [...prev];
+          next.sort((a, b) => {
+            const aSolved = solvedWordIds.includes(a.id);
+            const bSolved = solvedWordIds.includes(b.id);
+            if (aSolved === bSolved) {
+              return 0;
+            }
+            return aSolved ? -1 : 1;
+          });
+          return next;
+        });
+      };
+      clearSolveSortTimeout();
+      solveSortTimeoutRef.current = window.setTimeout(() => {
+        applySolvedOrdering();
+        solveSortTimeoutRef.current = null;
+      }, completionDelayMs);
       setSelectedWordIds([]);
-      if (revealTimeoutRef.current !== null) {
-        window.clearTimeout(revealTimeoutRef.current);
-      }
+      clearRevealTimeout();
+      const revealDelay = computeRevealDelay(completionDelayMs);
       revealTimeoutRef.current = window.setTimeout(() => {
+        clearSolveSortTimeout();
+        clearFollowupTimeouts();
+        setWordFeedback((prev) => {
+          const next: WordCardFeedbackMap = { ...prev };
+          solvedWordIds.forEach((id) => {
+            delete next[id];
+          });
+          return next;
+        });
         setAvailableWords((prev) =>
           prev.filter((card) => !solvedWordIds.includes(card.id)),
         );
@@ -198,9 +262,19 @@ export const useConnectionsGame = (
         });
         setPendingSolve(null);
         revealTimeoutRef.current = null;
-      }, SOLVE_REVEAL_DELAY_MS);
+      }, revealDelay);
       return;
     }
+
+    runHopSequence({
+      ids: candidateWordIds,
+      availableWords,
+      setFeedback: setFeedbackForIds,
+      hopTimeoutsRef,
+      followupTimeoutsRef,
+      finishStatus: "idle",
+      finishPaddingMs: HOP_TIMING.hopToIdlePaddingMs,
+    });
 
     setMistakesRemaining((prev) => {
       const next = Math.max(prev - 1, 0);
@@ -214,6 +288,7 @@ export const useConnectionsGame = (
 
   return {
     availableWords,
+    wordFeedback,
     orderedSolvedCategories,
     revealCategories,
     selectedWordIds,

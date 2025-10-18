@@ -18,3 +18,6 @@ export type GuessFeedback =
       type: "incorrect";
       remaining: number;
     };
+
+export type WordCardFeedbackStatus = "idle" | "hop" | "lift";
+export type WordCardFeedbackMap = Record<string, WordCardFeedbackStatus>;

@@ -1,8 +1,17 @@
-import { Reorder } from "framer-motion";
+import {
+  AnimatePresence,
+  Reorder,
+  motion,
+  type Transition,
+} from "framer-motion";
 import styled from "styled-components";
 import type { CategoryDefinition } from "../../data/puzzles";
 import { colorSwatches, colorTextOverrides } from "../../data/puzzles";
-import type { WordCard } from "../../game/types";
+import type {
+  WordCard,
+  WordCardFeedbackMap,
+  WordCardFeedbackStatus,
+} from "../../game/types";
 
 type LengthCategory = "short" | "medium" | "long";
 type WordLayoutCategory = "single" | "double";
@@ -12,6 +21,7 @@ interface WordGridProps {
   selectedWordIds: string[];
   onToggleWord: (wordId: string) => void;
   onReorderWords?: (nextOrder: WordCard[]) => void;
+  wordFeedback?: WordCardFeedbackMap;
   solvedCategories: CategoryDefinition[];
   disabled?: boolean;
 }
@@ -28,7 +38,7 @@ const Grid = styled.div`
   margin: 0 auto;
 `;
 
-const SolvedCategoryTile = styled.article<{
+const SolvedCategoryTile = styled(motion.article)<{
   $color: CategoryDefinition["color"];
 }>`
   grid-column: 1 / -1;
@@ -74,7 +84,7 @@ const WordItem = styled(Reorder.Item)`
   justify-content: stretch;
 `;
 
-const WordButton = styled.button<{
+const WordButton = styled(motion.button)<{
   $selected: boolean;
   $length: LengthCategory;
   $layout: WordLayoutCategory;
@@ -159,60 +169,123 @@ const noopReorder: (nextOrder: WordCard[]) => void = () => {
   /* no-op */
 };
 
+type FeedbackAnimation = {
+  animate: { y: number | number[]; scale: number | number[] };
+  transition: Transition;
+};
+
+const hopKeyframes: number[] = [0, -18, 0];
+const hopTransition: Transition = {
+  duration: 0.24,
+  ease: [0.33, 1, 0.68, 1],
+  times: [0, 0.5, 1],
+};
+
+const liftKeyframes: number[] = [0, -6, -26, -26];
+const liftTransition: Transition = {
+  duration: 0.6,
+  ease: [0.18, 0.84, 0.26, 0.98],
+  times: [0, 0.25, 0.7, 1],
+};
+
+const idleTransition: Transition = { duration: 0.18 };
+
+const feedbackAnimations: Record<WordCardFeedbackStatus, FeedbackAnimation> = {
+  idle: {
+    animate: { y: 0, scale: 1 },
+    transition: idleTransition,
+  },
+  hop: {
+    animate: { y: hopKeyframes, scale: 1 },
+    transition: hopTransition,
+  },
+  lift: {
+    animate: { y: liftKeyframes, scale: 1 },
+    transition: liftTransition,
+  },
+};
+
 const WordGrid = ({
   words,
   selectedWordIds,
   onToggleWord,
   onReorderWords,
+  wordFeedback,
   solvedCategories,
   disabled = false,
 }: WordGridProps) => {
   const handleReorder = onReorderWords ?? noopReorder;
+  const feedbackMap = wordFeedback ?? {};
 
   return (
     <Grid>
-      {solvedCategories.map((category) => (
-        <SolvedCategoryTile key={`solved-${category.id}`} $color={category.color}>
-          <SolvedCategoryTitle>{category.title}</SolvedCategoryTitle>
-          <SolvedCategoryWords>
-            {category.words.map((word) => (
-              <span key={word}>{word}</span>
-            ))}
-          </SolvedCategoryWords>
-        </SolvedCategoryTile>
-      ))}
+      <AnimatePresence>
+        {solvedCategories.map((category) => (
+          <SolvedCategoryTile
+            key={`solved-${category.id}`}
+            $color={category.color}
+            layout
+            initial={{ opacity: 0, scale: 0.88 }}
+            animate={{ opacity: 1, scale: [0.95, 1.15, 1] }}
+            exit={{ opacity: 0, scale: 0.92 }}
+            transition={{
+              delay: 0.08,
+              duration: 0.8,
+              ease: [0.16, 1, 0.3, 1],
+              scale: { times: [0, 0.55, 1] },
+            }}
+          >
+            <SolvedCategoryTitle>{category.title}</SolvedCategoryTitle>
+            <SolvedCategoryWords>
+              {category.words.map((word) => (
+                <span key={word}>{word}</span>
+              ))}
+            </SolvedCategoryWords>
+          </SolvedCategoryTile>
+        ))}
+      </AnimatePresence>
       <WordList
         axis="y"
         values={words}
         onReorder={(order) => handleReorder(order as WordCard[])}
         layoutScroll
       >
-        {words.map((card) => (
-          <WordItem
-            key={card.id}
-            value={card}
-            layoutId={card.id}
-            transition={{
-              layout: { duration: 0.4, ease: "easeInOut" },
-              opacity: { duration: 0.18 },
-              scale: { duration: 0.18 },
-            }}
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            drag={false}
-          >
-            <WordButton
-              type="button"
-              onClick={() => onToggleWord(card.id)}
-              $selected={selectedWordIds.includes(card.id)}
-              $length={getLengthCategory(card.label)}
-              $layout={getLayoutCategory(card.label)}
-              disabled={disabled}
+        {words.map((card) => {
+          const feedbackStatus: WordCardFeedbackStatus =
+            feedbackMap[card.id] ?? "idle";
+          const animation = feedbackAnimations[feedbackStatus];
+
+          return (
+            <WordItem
+              key={card.id}
+              value={card}
+              layoutId={card.id}
+              transition={{
+                layout: { duration: 0.4, ease: "easeInOut" },
+                opacity: { duration: 0.18 },
+                scale: { duration: 0.18 },
+              }}
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              drag={false}
             >
-              {card.label}
-            </WordButton>
-          </WordItem>
-        ))}
+              <WordButton
+                type="button"
+                onClick={() => onToggleWord(card.id)}
+                $selected={selectedWordIds.includes(card.id)}
+                $length={getLengthCategory(card.label)}
+                $layout={getLayoutCategory(card.label)}
+                disabled={disabled}
+                layout
+                initial={false}
+                animate={animation.animate}
+                transition={animation.transition}
+              >
+                {card.label}
+              </WordButton>
+            </WordItem>
+          );
+        })}
       </WordList>
     </Grid>
   );

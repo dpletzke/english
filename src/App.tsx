@@ -19,6 +19,7 @@ const App = () => {
 
   const {
     availableWords,
+    wordFeedback,
     orderedSolvedCategories,
     revealCategories,
     status,
@@ -74,6 +75,7 @@ const App = () => {
               selectedWordIds={selectedWordIds}
               onToggleWord={onToggleWord}
               onReorderWords={reorderWords}
+              wordFeedback={wordFeedback}
               solvedCategories={orderedSolvedCategories}
               disabled={!isPlaying}
             />
