@@ -181,13 +181,6 @@ const hopTransition: Transition = {
   times: [0, 0.5, 1],
 };
 
-const liftKeyframes: number[] = [0, -6, -26, -26];
-const liftTransition: Transition = {
-  duration: 0.6,
-  ease: [0.18, 0.84, 0.26, 0.98],
-  times: [0, 0.25, 0.7, 1],
-};
-
 const idleTransition: Transition = { duration: 0.18 };
 
 const feedbackAnimations: Record<WordCardFeedbackStatus, FeedbackAnimation> = {
@@ -200,8 +193,8 @@ const feedbackAnimations: Record<WordCardFeedbackStatus, FeedbackAnimation> = {
     transition: hopTransition,
   },
   lift: {
-    animate: { y: liftKeyframes, scale: 1 },
-    transition: liftTransition,
+    animate: { y: 0, scale: 1 },
+    transition: idleTransition,
   },
 };
 
