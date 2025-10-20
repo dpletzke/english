@@ -192,10 +192,6 @@ const feedbackAnimations: Record<WordCardFeedbackStatus, FeedbackAnimation> = {
     animate: { y: hopKeyframes, scale: 1 },
     transition: hopTransition,
   },
-  lift: {
-    animate: { y: 0, scale: 1 },
-    transition: idleTransition,
-  },
 };
 
 const WordGrid = ({

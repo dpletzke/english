@@ -21,8 +21,7 @@ interface HopSequenceParams {
   setFeedback: (ids: string[], status: WordCardFeedbackStatus) => void;
   hopTimeoutsRef: RefObject<number[]>;
   followupTimeoutsRef: RefObject<number[]>;
-  finishStatus: WordCardFeedbackStatus;
-  finishPaddingMs: number;
+  settlePaddingMs: number;
 }
 
 const orderIdsByGridPosition = (ids: string[], availableWords: WordCard[]) =>
@@ -43,8 +42,7 @@ export const runHopSequence = ({
   setFeedback,
   hopTimeoutsRef,
   followupTimeoutsRef,
-  finishStatus,
-  finishPaddingMs,
+  settlePaddingMs,
 }: HopSequenceParams): HopSequenceResult => {
   clearTimeoutCollection(hopTimeoutsRef);
   clearTimeoutCollection(followupTimeoutsRef);
@@ -53,7 +51,7 @@ export const runHopSequence = ({
     return {
       orderedIds: [],
       hopDurationMs: 0,
-      completionDelayMs: finishPaddingMs,
+      completionDelayMs: settlePaddingMs,
     };
   }
 
@@ -67,10 +65,10 @@ export const runHopSequence = ({
   });
 
   const hopDurationMs = hopDurationForCount(orderedIds.length);
-  const completionDelayMs = hopDurationMs + finishPaddingMs;
+  const completionDelayMs = hopDurationMs + settlePaddingMs;
 
   scheduleManagedTimeout(followupTimeoutsRef, () => {
-    setFeedback(orderedIds, finishStatus);
+    setFeedback(orderedIds, "idle");
   }, completionDelayMs);
 
   return { orderedIds, hopDurationMs, completionDelayMs };

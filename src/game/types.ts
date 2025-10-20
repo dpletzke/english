@@ -19,5 +19,5 @@ export type GuessFeedback =
       remaining: number;
     };
 
-export type WordCardFeedbackStatus = "idle" | "hop" | "lift";
+export type WordCardFeedbackStatus = "idle" | "hop";
 export type WordCardFeedbackMap = Record<string, WordCardFeedbackStatus>;

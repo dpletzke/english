@@ -214,8 +214,7 @@ export const useConnectionsGame = (
         setFeedback: setFeedbackForIds,
         hopTimeoutsRef,
         followupTimeoutsRef,
-        finishStatus: "lift",
-        finishPaddingMs: HOP_TIMING.hopToLiftPaddingMs,
+        settlePaddingMs: HOP_TIMING.hopToSolvedPaddingMs,
       });
       setPendingSolve({ categoryId: targetCategoryId, wordIds: solvedWordIds });
       const applySolvedOrdering = () => {
@@ -272,8 +271,7 @@ export const useConnectionsGame = (
       setFeedback: setFeedbackForIds,
       hopTimeoutsRef,
       followupTimeoutsRef,
-      finishStatus: "idle",
-      finishPaddingMs: HOP_TIMING.hopToIdlePaddingMs,
+      settlePaddingMs: HOP_TIMING.hopToIdlePaddingMs,
     });
 
     setMistakesRemaining((prev) => {
