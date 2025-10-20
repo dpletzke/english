@@ -12,9 +12,7 @@ import type {
   WordCardFeedbackMap,
   WordCardFeedbackStatus,
 } from "../../game/types";
-
-type LengthCategory = "short" | "medium" | "long";
-type WordLayoutCategory = "single" | "double";
+import { WordButton } from "./WordButton";
 
 interface WordGridProps {
   words: WordCard[];
@@ -84,73 +82,7 @@ const WordItem = styled(Reorder.Item)`
   justify-content: stretch;
 `;
 
-const WordButton = styled(motion.button)<{
-  $selected: boolean;
-  $length: LengthCategory;
-  $layout: WordLayoutCategory;
-}>`
-  width: 100%;
-  height: 100%;
-  border-radius: 12px;
-  border: 3px solid ${({ $selected }) => ($selected ? "#1f1f1f" : "#c7c2b7")};
-  background: ${({ $selected }) => ($selected ? "#1f1f1f" : "#e2dfcf")};
-  color: ${({ $selected }) => ($selected ? "#fff" : "#1f1f1f")};
-  font-size: ${({ $length, $layout }) => {
-    if ($layout === "double") {
-      return "clamp(11px, 1.9vh, 16px)";
-    }
-    switch ($length) {
-      case "long":
-        return "clamp(10px, 1.6vh, 14px)";
-      case "medium":
-        return "clamp(11px, 1.85vh, 15px)";
-      default:
-        return "clamp(12px, 2.2vh, 17px)";
-    }
-  }};
-  font-weight: 700;
-  letter-spacing: ${({ $length }) =>
-    $length === "long" ? "0.18px" : "0.32px"};
-  cursor: pointer;
-  text-transform: uppercase;
-  transition:
-    transform 120ms ease,
-    box-shadow 120ms ease,
-    border-color 120ms ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding-block: clamp(7px, 1.6vh, 12px);
-  padding-inline: clamp(12px, 2.6vw, 22px);
-  line-height: ${({ $layout }) => ($layout === "double" ? 1.15 : 1.08)};
-  white-space: ${({ $layout }) => ($layout === "double" ? "normal" : "nowrap")};
-  flex-wrap: ${({ $layout }) => ($layout === "double" ? "wrap" : "nowrap")};
-  word-break: ${({ $layout }) =>
-    $layout === "double" ? "break-word" : "normal"};
-  overflow-wrap: ${({ $layout }) =>
-    $layout === "double" ? "anywhere" : "normal"};
-  hyphens: ${({ $layout }) => ($layout === "double" ? "auto" : "none")};
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-
-  &:not(:disabled):active {
-    transform: translateY(1px);
-  }
-
-  &:not(:disabled):hover {
-    box-shadow: ${({ $selected }) =>
-      $selected
-        ? "0 4px 8px rgba(0, 0, 0, 0.2)"
-        : "0 4px 12px rgba(0, 0, 0, 0.1)"};
-    border-color: ${({ $selected }) => ($selected ? "#1f1f1f" : "#a9a393")};
-  }
-`;
-
-const getLengthCategory = (label: string): LengthCategory => {
+const getLengthCategory = (label: string): "short" | "medium" | "long" => {
   const condensedLength = label.replace(/\s+/g, "").length;
   if (condensedLength >= 11) {
     return "long";
@@ -161,9 +93,10 @@ const getLengthCategory = (label: string): LengthCategory => {
   return "short";
 };
 
-const getLayoutCategory = (label: string): WordLayoutCategory => {
-  return label.trim().split(/\s+/).length === 2 ? "double" : "single";
-};
+const getLayoutCategory = (
+  label: string,
+): "single" | "double" =>
+  label.trim().split(/\s+/).length === 2 ? "double" : "single";
 
 const noopReorder: (nextOrder: WordCard[]) => void = () => {
   /* no-op */
@@ -174,23 +107,18 @@ type FeedbackAnimation = {
   transition: Transition;
 };
 
-const hopKeyframes: number[] = [0, -18, 0];
-const hopTransition: Transition = {
-  duration: 0.24,
-  ease: [0.33, 1, 0.68, 1],
-  times: [0, 0.5, 1],
-};
-
-const idleTransition: Transition = { duration: 0.18 };
-
 const feedbackAnimations: Record<WordCardFeedbackStatus, FeedbackAnimation> = {
   idle: {
     animate: { y: 0, scale: 1 },
-    transition: idleTransition,
+    transition: { duration: 0.18 },
   },
   hop: {
-    animate: { y: hopKeyframes, scale: 1 },
-    transition: hopTransition,
+    animate: { y: [0, -18, 0], scale: 1 },
+    transition: {
+      duration: 0.24,
+      ease: [0.33, 1, 0.68, 1],
+      times: [0, 0.5, 1],
+    },
   },
 };
 
