@@ -12,6 +12,7 @@ import { HOP_TIMING, computeRevealDelay } from "./useConnectionsGame/timing";
 import {
   clearTimeoutCollection,
   clearTimeoutRef,
+  scheduleManagedTimeout,
 } from "./useConnectionsGame/timeouts";
 import { runHopSequence } from "./useConnectionsGame/hopSequence";
 
@@ -50,16 +51,17 @@ export const useConnectionsGame = (
     useState<number>(mistakesAllowed);
   const [status, setStatus] = useState<GameStatus>("playing");
   const [pendingSolve, setPendingSolve] = useState<PendingSolve | null>(null);
+  const [isMistakeAnimating, setIsMistakeAnimating] = useState(false);
   const revealTimeoutRef = useRef<number | null>(null);
   const solveSortTimeoutRef = useRef<number | null>(null);
   const hopTimeoutsRef = useRef<number[]>([]);
-  const followupTimeoutsRef = useRef<number[]>([]);
+  const settleTimeoutsRef = useRef<number[]>([]);
   const [wordFeedback, setWordFeedback] = useState<WordCardFeedbackMap>({});
 
   const clearRevealTimeout = () => clearTimeoutRef(revealTimeoutRef);
   const clearSolveSortTimeout = () => clearTimeoutRef(solveSortTimeoutRef);
   const clearHopTimeouts = () => clearTimeoutCollection(hopTimeoutsRef);
-  const clearFollowupTimeouts = () => clearTimeoutCollection(followupTimeoutsRef);
+  const clearSettleTimeouts = () => clearTimeoutCollection(settleTimeoutsRef);
 
   const setFeedbackForIds = (ids: string[], status: WordCardFeedbackStatus) => {
     if (ids.length === 0) {
@@ -81,10 +83,11 @@ export const useConnectionsGame = (
     setMistakesRemaining(mistakesAllowed);
     setStatus("playing");
     setPendingSolve(null);
+    setIsMistakeAnimating(false);
     setWordFeedback({});
     clearRevealTimeout();
     clearSolveSortTimeout();
-    clearFollowupTimeouts();
+    clearSettleTimeouts();
     clearHopTimeouts();
   }, [puzzle, mistakesAllowed]);
 
@@ -92,7 +95,7 @@ export const useConnectionsGame = (
     () => () => {
       clearRevealTimeout();
       clearSolveSortTimeout();
-      clearFollowupTimeouts();
+      clearSettleTimeouts();
       clearHopTimeouts();
     },
     [],
@@ -127,7 +130,7 @@ export const useConnectionsGame = (
   );
 
   const onToggleWord = (wordId: string) => {
-    if (status !== "playing") {
+    if (status !== "playing" || isMistakeAnimating) {
       return;
     }
 
@@ -147,7 +150,7 @@ export const useConnectionsGame = (
   };
 
   const shuffleWords = () => {
-    if (status !== "playing") {
+    if (status !== "playing" || isMistakeAnimating) {
       return;
     }
 
@@ -156,7 +159,7 @@ export const useConnectionsGame = (
   };
 
   const reorderWords = (nextOrder: WordCard[]) => {
-    if (status !== "playing") {
+    if (status !== "playing" || isMistakeAnimating) {
       return;
     }
     if (pendingSolve) {
@@ -166,7 +169,7 @@ export const useConnectionsGame = (
   };
 
   const clearSelection = () => {
-    if (status !== "playing") {
+    if (status !== "playing" || isMistakeAnimating) {
       return;
     }
 
@@ -177,7 +180,11 @@ export const useConnectionsGame = (
   };
 
   const submitSelection = () => {
-    if (status !== "playing" || selectedWordIds.length !== 4) {
+    if (
+      status !== "playing" ||
+      selectedWordIds.length !== 4 ||
+      isMistakeAnimating
+    ) {
       return;
     }
     if (pendingSolve) {
@@ -208,12 +215,12 @@ export const useConnectionsGame = (
       !solvedSet.has(targetCategoryId)
     ) {
       const solvedWordIds = selectedCards.map((card) => card.id);
-      const { completionDelayMs } = runHopSequence({
+      const { settleDelayMs } = runHopSequence({
         ids: solvedWordIds,
         availableWords,
         setFeedback: setFeedbackForIds,
         hopTimeoutsRef,
-        followupTimeoutsRef,
+        settleTimeoutsRef,
         settlePaddingMs: HOP_TIMING.hopToSolvedPaddingMs,
       });
       setPendingSolve({ categoryId: targetCategoryId, wordIds: solvedWordIds });
@@ -235,13 +242,13 @@ export const useConnectionsGame = (
       solveSortTimeoutRef.current = window.setTimeout(() => {
         applySolvedOrdering();
         solveSortTimeoutRef.current = null;
-      }, completionDelayMs);
+      }, settleDelayMs);
       setSelectedWordIds([]);
       clearRevealTimeout();
-      const revealDelay = computeRevealDelay(completionDelayMs);
+      const revealDelay = computeRevealDelay(settleDelayMs);
       revealTimeoutRef.current = window.setTimeout(() => {
         clearSolveSortTimeout();
-        clearFollowupTimeouts();
+        clearSettleTimeouts();
         setWordFeedback((prev) => {
           const next: WordCardFeedbackMap = { ...prev };
           solvedWordIds.forEach((id) => {
@@ -265,14 +272,24 @@ export const useConnectionsGame = (
       return;
     }
 
-    runHopSequence({
+    setIsMistakeAnimating(true);
+    const { settleDelayMs } = runHopSequence({
       ids: candidateWordIds,
       availableWords,
       setFeedback: setFeedbackForIds,
       hopTimeoutsRef,
-      followupTimeoutsRef,
-      settlePaddingMs: HOP_TIMING.hopToIdlePaddingMs,
+      settleTimeoutsRef,
+      settlePaddingMs: HOP_TIMING.hopToShakePaddingMs,
+      settleStatus: "shake",
     });
+    scheduleManagedTimeout(
+      settleTimeoutsRef,
+      () => {
+        setFeedbackForIds(candidateWordIds, "idle");
+        setIsMistakeAnimating(false);
+      },
+      settleDelayMs + HOP_TIMING.shakeDurationMs,
+    );
 
     setMistakesRemaining((prev) => {
       const next = Math.max(prev - 1, 0);
