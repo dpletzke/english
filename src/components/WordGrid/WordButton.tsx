@@ -110,6 +110,6 @@ export const WordButton = styled(motion.button)<WordButtonStyleProps>`
   }
 
   &:not(:disabled):active {
-    transform: translateY(1px);
+    translate: 0px 1px;
   }
 `;

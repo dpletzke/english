@@ -21,7 +21,7 @@ const Label = styled.p`
 const MistakeTrack = styled.div`
   display: inline-flex;
   gap: 8px;
-  transform: translateY(1px);
+  translate: 0px 1px;
 `;
 
 const MistakePip = styled.span.attrs<{ $active: boolean; $reduceMotion: boolean }>(

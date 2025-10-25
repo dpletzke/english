@@ -41,7 +41,7 @@ const BaseButton = styled.button`
   }
 
   &:not(:disabled):active {
-    transform: translateY(1px);
+    translate: 0px 1px;
   }
 `;
 

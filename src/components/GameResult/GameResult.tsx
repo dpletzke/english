@@ -63,7 +63,7 @@ const CloseButton = styled.button`
   }
 
   &:active {
-    transform: translateY(1px);
+    translate: 0px 1px;
   }
 `;
 
