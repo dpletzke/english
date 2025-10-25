@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 
 interface StatusBarProps {
   mistakesAllowed: number;
@@ -24,84 +23,35 @@ const MistakeTrack = styled.div`
   translate: 0 0.0625rem;
 `;
 
-const MistakePip = styled.span.attrs<{ $active: boolean; $reduceMotion: boolean }>(
-  ({ $active, $reduceMotion }) => ({
-  role: "img",
+const MistakePip = styled.span.attrs<{ $active: boolean }>(
+  ({ $active }) => ({
+    role: "img",
     "aria-label": $active ? "mistake remaining" : "mistake used",
     "data-state": $active ? "active" : "spent",
-    "data-motion": $reduceMotion ? "reduced" : "standard",
   }),
-)<{ $active: boolean; $reduceMotion: boolean }>`
+)<{ $active: boolean }>`
   width: 0.875rem;
   height: 0.875rem;
   border-radius: 50%;
   border: 1px solid rgba(46, 39, 27, 0.4);
   background: ${({ $active }) =>
     $active ? "var(--status-pip-active)" : "var(--status-pip-spent)"};
-  transform: ${({ $active, $reduceMotion }) =>
-    $reduceMotion || $active ? "scale(1)" : "scale(0.6)"};
-  opacity: ${({ $active, $reduceMotion }) =>
-    $reduceMotion || $active ? 1 : 0.4};
-  transition: ${({ $reduceMotion }) =>
-    $reduceMotion
-      ? "background-color 0.18s ease-out, border-color 0.18s ease-out"
-      : "transform 0.18s ease-out, opacity 0.18s ease-out, background-color 0.18s ease-out, border-color 0.18s ease-out"};
-  will-change: ${({ $reduceMotion }) =>
-    $reduceMotion ? "auto" : "transform, opacity"};
+  transform: ${({ $active }) => ($active ? "scale(1)" : "scale(0.6)")};
+  opacity: ${({ $active }) => ($active ? 1 : 0.4)};
+  transition: transform 0.18s ease-out, opacity 0.18s ease-out,
+    background-color 0.18s ease-out, border-color 0.18s ease-out;
+  will-change: transform, opacity;
+  transform-origin: center;
 
-  ${({ $reduceMotion }) =>
-    $reduceMotion &&
-    css`
-      transform-origin: center;
-    `}
+  @media (prefers-reduced-motion: reduce) {
+    transform: scale(1);
+    opacity: 1;
+    transition: background-color 0.18s ease-out, border-color 0.18s ease-out;
+    will-change: auto;
+  }
 `;
 
-const prefersReducedMotionQuery = "(prefers-reduced-motion: reduce)";
-
-const usePrefersReducedMotion = (): boolean => {
-  const getPreference = () =>
-    typeof window !== "undefined" &&
-    typeof window.matchMedia === "function" &&
-    window.matchMedia(prefersReducedMotionQuery).matches;
-
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(
-    getPreference,
-  );
-
-  useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia(prefersReducedMotionQuery);
-
-    const handleChange = (event: MediaQueryListEvent) => {
-      setPrefersReducedMotion(event.matches);
-    };
-
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener("change", handleChange);
-    } else {
-      mediaQuery.addListener(handleChange);
-    }
-
-    setPrefersReducedMotion(mediaQuery.matches);
-
-    return () => {
-      if (mediaQuery.removeEventListener) {
-        mediaQuery.removeEventListener("change", handleChange);
-      } else {
-        mediaQuery.removeListener(handleChange);
-      }
-    };
-  }, []);
-
-  return prefersReducedMotion;
-};
-
 const StatusBar = ({ mistakesAllowed, mistakesRemaining }: StatusBarProps) => {
-  const prefersReducedMotion = usePrefersReducedMotion();
-
   return (
     <Container>
       <Label>Mistakes Remaining: </Label>
@@ -112,7 +62,6 @@ const StatusBar = ({ mistakesAllowed, mistakesRemaining }: StatusBarProps) => {
             <MistakePip
               key={index}
               $active={pipActive}
-              $reduceMotion={prefersReducedMotion}
             />
           );
         })}
