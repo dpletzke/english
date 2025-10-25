@@ -62,17 +62,20 @@ const DOUBLE_LAYOUT_STYLES = css`
 const applyLayoutStyles = ($layout: WordLayoutCategory) =>
   $layout === "double" ? DOUBLE_LAYOUT_STYLES : SINGLE_LAYOUT_STYLES;
 
-const applyPaletteStyles = ($selected: boolean) => {
+const applyPaletteStyles = ($selected: boolean, $isDragging?: boolean) => {
   const palette = $selected ? BUTTON_PALETTE.selected : BUTTON_PALETTE.idle;
   return css`
     border: 3px solid ${palette.border};
     background: ${palette.background};
     color: ${palette.text};
 
-    &:not(:disabled):hover {
-      box-shadow: ${palette.hoverShadow};
-      border-color: ${palette.hoverBorder};
-    }
+    ${!$isDragging &&
+    css`
+      &:not(:disabled):hover {
+        box-shadow: ${palette.hoverShadow};
+        border-color: ${palette.hoverBorder};
+      }
+    `}
   `;
 };
 
@@ -80,10 +83,11 @@ interface WordButtonStyleProps {
   $selected: boolean;
   $length: LengthCategory;
   $layout: WordLayoutCategory;
+  $isDragging?: boolean;
 }
 
 export const WordButton = styled(motion.button)<WordButtonStyleProps>`
-  ${({ $selected }) => applyPaletteStyles($selected)}
+  ${({ $selected, $isDragging }) => applyPaletteStyles($selected, $isDragging)}
   width: 100%;
   height: 100%;
   border-radius: 12px;
@@ -111,5 +115,11 @@ export const WordButton = styled(motion.button)<WordButtonStyleProps>`
 
   &:not(:disabled):active {
     translate: 0px 1px;
+  }
+
+  &[data-dragging="true"] {
+    box-shadow: none;
+    transition: none;
+    translate: 0;
   }
 `;

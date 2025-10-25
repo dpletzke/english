@@ -33,18 +33,10 @@ describe("StatusBar", () => {
     expect(fourth).toHaveAttribute("data-state", "spent");
   });
 
-  it("respects the prefers-reduced-motion media query", () => {
+  it("does not rely on matchMedia for reduced motion handling", () => {
     const originalMatchMedia = window.matchMedia;
 
-    const mockMatchMedia = vi.fn().mockImplementation((query: string) => ({
-      matches: true,
-      media: query,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    }));
+    const mockMatchMedia = vi.fn();
 
     Object.defineProperty(window, "matchMedia", {
       writable: true,
@@ -56,8 +48,7 @@ describe("StatusBar", () => {
       <StatusBar mistakesAllowed={4} mistakesRemaining={4} />,
     );
 
-    const pip = screen.getAllByLabelText(/mistake/i)[0];
-    expect(pip).toHaveAttribute("data-motion", "reduced");
+    expect(mockMatchMedia).not.toHaveBeenCalled();
 
     if (originalMatchMedia) {
       Object.defineProperty(window, "matchMedia", {

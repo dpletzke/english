@@ -97,16 +97,16 @@ const WordItem = styled(Reorder.Item)<{
   justify-content: stretch;
   touch-action: none;
   user-select: none;
+  ${({ $isDragging }) =>
+    $isDragging &&
+    css`
+      pointer-events: none;
+    `}
   ${({ $isDropTarget }) =>
     $isDropTarget &&
     css`
-      outline: 2px solid var(--accent-color, #1f1f1f);
+      outline: 2px solid var(--accent-color);
       outline-offset: 4px;
-    `}
-  ${({ $isLockedOut }) =>
-    $isLockedOut &&
-    css`
-      pointer-events: none;
     `}
   ${({ $dragEnabled, $isLockedOut, $isDragging }) =>
     $dragEnabled &&
@@ -425,6 +425,13 @@ const DraggableWordTile = ({
   const isDropTarget = dragTargetWordId === card.id && dragEnabled;
   const isLockedOut =
     dragEnabled && isDragLocked && draggingWordId !== null && draggingWordId !== card.id;
+  const buttonCursor = dragEnabled
+    ? isDragging
+      ? "grabbing"
+      : isLockedOut
+        ? "default"
+        : "grab"
+    : undefined;
 
   useEffect(
     () => () => {
@@ -468,16 +475,14 @@ const DraggableWordTile = ({
         $selected={isSelected}
         $length={lengthCategory}
         $layout={layoutCategory}
+        $isDragging={isDragging}
         disabled={disabled}
         layout
         initial={false}
         animate={feedbackAnimation.animate}
         transition={feedbackAnimation.transition}
-        style={
-          dragEnabled
-            ? { cursor: isDragging ? "grabbing" : isLockedOut ? "default" : "grab" }
-            : undefined
-        }
+        data-dragging={isDragging ? "true" : undefined}
+        style={buttonCursor ? { cursor: buttonCursor } : undefined}
       >
         {card.label}
       </WordButton>

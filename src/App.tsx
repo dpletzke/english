@@ -26,11 +26,16 @@ const App = () => {
     mistakesAllowed,
     mistakesRemaining,
     selectedWordIds,
-    reorderWords,
+    draggingWordId,
+    dragTargetWordId,
+    isDragLocked,
     shuffleWords,
     onToggleWord,
     clearSelection,
     submitSelection,
+    onWordDragStart,
+    onWordDragMove,
+    onWordDragEnd,
   } = useConnectionsGame(puzzle);
 
   const [isResultOpen, setIsResultOpen] = useState(false);
@@ -74,10 +79,15 @@ const App = () => {
               words={availableWords}
               selectedWordIds={selectedWordIds}
               onToggleWord={onToggleWord}
-              onReorderWords={reorderWords}
               wordFeedback={wordFeedback}
               solvedCategories={orderedSolvedCategories}
               disabled={!isPlaying}
+              draggingWordId={draggingWordId}
+              dragTargetWordId={dragTargetWordId}
+              isDragLocked={isDragLocked}
+              onWordDragStart={onWordDragStart}
+              onWordDragMove={onWordDragMove}
+              onWordDragEnd={onWordDragEnd}
             />
             <StatusBar
               mistakesAllowed={mistakesAllowed}
