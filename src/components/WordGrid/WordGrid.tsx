@@ -1,10 +1,14 @@
+import { useCallback, useEffect, useRef } from "react";
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 import {
   AnimatePresence,
   Reorder,
   motion,
+  type PanInfo,
   type Transition,
+  useDragControls,
 } from "framer-motion";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import type { CategoryDefinition } from "../../data/puzzles";
 import { colorSwatches, colorTextOverrides } from "../../data/puzzles";
 import type {
@@ -22,6 +26,12 @@ interface WordGridProps {
   wordFeedback?: WordCardFeedbackMap;
   solvedCategories: CategoryDefinition[];
   disabled?: boolean;
+  draggingWordId?: string | null;
+  dragTargetWordId?: string | null;
+  isDragLocked?: boolean;
+  onWordDragStart?: (wordId: string) => void;
+  onWordDragMove?: (targetWordId: string | null) => void;
+  onWordDragEnd?: () => void;
 }
 
 const Grid = styled.div`
@@ -73,13 +83,37 @@ const WordList = styled(Reorder.Group)`
   display: contents;
 `;
 
-const WordItem = styled(Reorder.Item)`
+const WordItem = styled(Reorder.Item)<{
+  $isDropTarget: boolean;
+  $isLockedOut: boolean;
+  $isDragging: boolean;
+  $dragEnabled: boolean;
+}>`
   position: relative;
   width: 100%;
   height: 100%;
   display: flex;
   align-items: stretch;
   justify-content: stretch;
+  touch-action: none;
+  user-select: none;
+  ${({ $isDropTarget }) =>
+    $isDropTarget &&
+    css`
+      outline: 2px solid var(--accent-color, #1f1f1f);
+      outline-offset: 4px;
+    `}
+  ${({ $isLockedOut }) =>
+    $isLockedOut &&
+    css`
+      pointer-events: none;
+    `}
+  ${({ $dragEnabled, $isLockedOut, $isDragging }) =>
+    $dragEnabled &&
+    !$isLockedOut &&
+    css`
+      cursor: ${$isDragging ? "grabbing" : "grab"};
+    `}
 `;
 
 const getLengthCategory = (label: string): "short" | "medium" | "long" => {
@@ -97,6 +131,18 @@ const getLayoutCategory = (label: string): "single" | "double" =>
   label.trim().split(/\s+/).length === 2 ? "double" : "single";
 
 const noopReorder: (nextOrder: WordCard[]) => void = () => {
+  /* no-op */
+};
+
+const noopWordDragStart = () => {
+  /* no-op */
+};
+
+const noopWordDragMove = (_target: string | null) => {
+  /* no-op */
+};
+
+const noopWordDragEnd = () => {
   /* no-op */
 };
 
@@ -143,6 +189,301 @@ const cardFeedbackAnimations: Record<
   },
 };
 
+const LONG_PRESS_DELAY_MS = 200;
+const POINTER_DRAG_THRESHOLD_PX = 6;
+
+const findWordIdAtPoint = (
+  point: { x: number; y: number },
+  excludeId: string,
+): string | null => {
+  if (typeof document === "undefined") {
+    return null;
+  }
+  const element = document.elementFromPoint(point.x, point.y);
+  if (!element) {
+    return null;
+  }
+  const wordElement = element.closest<HTMLElement>("[data-word-id]");
+  if (!wordElement) {
+    return null;
+  }
+  const candidateId =
+    wordElement.dataset.wordId ?? wordElement.getAttribute("data-word-id");
+  if (!candidateId || candidateId === excludeId) {
+    return null;
+  }
+  return candidateId;
+};
+
+interface DraggableWordTileProps {
+  card: WordCard;
+  isSelected: boolean;
+  disabled: boolean;
+  feedbackAnimation: CardFeedbackAnimation;
+  draggingWordId: string | null;
+  dragTargetWordId: string | null;
+  isDragLocked: boolean;
+  dragEnabled: boolean;
+  onToggleWord: (wordId: string) => void;
+  onWordDragStart: (wordId: string) => void;
+  onWordDragMove: (targetWordId: string | null) => void;
+  onWordDragEnd: () => void;
+}
+
+const DraggableWordTile = ({
+  card,
+  isSelected,
+  disabled,
+  feedbackAnimation,
+  draggingWordId,
+  dragTargetWordId,
+  isDragLocked,
+  dragEnabled,
+  onToggleWord,
+  onWordDragStart,
+  onWordDragMove,
+  onWordDragEnd,
+}: DraggableWordTileProps) => {
+  const dragControls = useDragControls();
+  const longPressTimeoutRef = useRef<number | null>(null);
+  const pendingPointerEventRef = useRef<PointerEvent | null>(null);
+  const isDraggingRef = useRef(false);
+  const lastTargetRef = useRef<string | null>(null);
+  const initialPointerRef = useRef<{ x: number; y: number } | null>(null);
+
+  const clearLongPressTimer = useCallback(() => {
+    if (longPressTimeoutRef.current !== null) {
+      window.clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+    pendingPointerEventRef.current = null;
+  }, []);
+
+  const reportDragMove = useCallback(
+    (nextTarget: string | null) => {
+      if (!dragEnabled) {
+        return;
+      }
+      if (lastTargetRef.current === nextTarget) {
+        return;
+      }
+      lastTargetRef.current = nextTarget;
+      onWordDragMove(nextTarget);
+    },
+    [dragEnabled, onWordDragMove],
+  );
+
+  const beginDrag = useCallback(
+    (pointerEvent: PointerEvent) => {
+      if (!dragEnabled) {
+        return;
+      }
+      if (disabled) {
+        return;
+      }
+      if (isDragLocked && draggingWordId !== card.id) {
+        return;
+      }
+      clearLongPressTimer();
+      onWordDragStart(card.id);
+      isDraggingRef.current = true;
+      pointerEvent.preventDefault();
+      pointerEvent.stopPropagation();
+      pendingPointerEventRef.current = null;
+      requestAnimationFrame(() => {
+        dragControls.start(pointerEvent, { snapToCursor: false });
+      });
+    },
+    [
+      card.id,
+      clearLongPressTimer,
+      dragControls,
+      dragEnabled,
+      disabled,
+      draggingWordId,
+      isDragLocked,
+      onWordDragStart,
+    ],
+  );
+
+  const handlePointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (disabled) {
+        return;
+      }
+      initialPointerRef.current = { x: event.clientX, y: event.clientY };
+      if (!dragEnabled) {
+        return;
+      }
+      if (isDragLocked && draggingWordId && draggingWordId !== card.id) {
+        return;
+      }
+      const pointerEvent = event.nativeEvent;
+      if (pointerEvent.pointerType === "touch") {
+        pendingPointerEventRef.current = pointerEvent;
+        clearLongPressTimer();
+        longPressTimeoutRef.current = window.setTimeout(() => {
+          const pendingEvent = pendingPointerEventRef.current;
+          if (pendingEvent) {
+            beginDrag(pendingEvent);
+          }
+        }, LONG_PRESS_DELAY_MS);
+      } else {
+        pendingPointerEventRef.current = pointerEvent;
+      }
+    },
+    [
+      beginDrag,
+      card.id,
+      clearLongPressTimer,
+      disabled,
+      dragEnabled,
+      draggingWordId,
+      isDragLocked,
+    ],
+  );
+
+  const handlePointerEnd = useCallback(() => {
+    clearLongPressTimer();
+    if (!isDraggingRef.current) {
+      pendingPointerEventRef.current = null;
+    }
+    initialPointerRef.current = null;
+  }, [clearLongPressTimer]);
+
+  const handlePointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (!dragEnabled || disabled) {
+        return;
+      }
+      if (isDraggingRef.current) {
+        return;
+      }
+      const pointerEvent = event.nativeEvent;
+      const startPoint = initialPointerRef.current;
+      if (!startPoint) {
+        return;
+      }
+      const deltaX = Math.abs(pointerEvent.clientX - startPoint.x);
+      const deltaY = Math.abs(pointerEvent.clientY - startPoint.y);
+
+      if (pointerEvent.pointerType === "touch") {
+        if (
+          deltaX > POINTER_DRAG_THRESHOLD_PX ||
+          deltaY > POINTER_DRAG_THRESHOLD_PX
+        ) {
+          clearLongPressTimer();
+        }
+        return;
+      }
+
+      if (
+        deltaX > POINTER_DRAG_THRESHOLD_PX ||
+        deltaY > POINTER_DRAG_THRESHOLD_PX
+      ) {
+        beginDrag(pointerEvent);
+      }
+    },
+    [beginDrag, clearLongPressTimer, disabled, dragEnabled],
+  );
+
+  const handleDrag = useCallback(
+    (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      if (!dragEnabled || !isDraggingRef.current) {
+        return;
+      }
+      const nextTarget = findWordIdAtPoint(info.point, card.id);
+      reportDragMove(nextTarget);
+    },
+    [card.id, dragEnabled, reportDragMove],
+  );
+
+  const handleDragEnd = useCallback(() => {
+    if (dragEnabled) {
+      onWordDragEnd();
+    }
+    lastTargetRef.current = null;
+    isDraggingRef.current = false;
+    clearLongPressTimer();
+  }, [clearLongPressTimer, dragEnabled, onWordDragEnd]);
+
+  const handleClick = useCallback(
+    (event: ReactMouseEvent<HTMLButtonElement>) => {
+      if (isDraggingRef.current) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      onToggleWord(card.id);
+    },
+    [card.id, onToggleWord],
+  );
+
+  const lengthCategory = getLengthCategory(card.label);
+  const layoutCategory = getLayoutCategory(card.label);
+  const isDragging = draggingWordId === card.id && dragEnabled;
+  const isDropTarget = dragTargetWordId === card.id && dragEnabled;
+  const isLockedOut =
+    dragEnabled && isDragLocked && draggingWordId !== null && draggingWordId !== card.id;
+
+  useEffect(
+    () => () => {
+      clearLongPressTimer();
+    },
+    [clearLongPressTimer],
+  );
+
+  return (
+    <WordItem
+      data-word-id={card.id}
+      value={card}
+      layoutId={card.id}
+      layout
+      animate={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0, scale: 0.96 }}
+      transition={{
+        layout: { duration: 0.4, ease: "easeInOut" },
+        opacity: { duration: 0.18 },
+        scale: { duration: 0.18 },
+      }}
+      drag
+      dragControls={dragControls}
+      dragListener={false}
+      dragMomentum={false}
+      onDrag={handleDrag}
+      onDragEnd={handleDragEnd}
+      $isDropTarget={isDropTarget}
+      $isLockedOut={isLockedOut}
+      $isDragging={isDragging}
+      $dragEnabled={dragEnabled}
+    >
+      <WordButton
+        type="button"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerEnd}
+        onPointerLeave={handlePointerEnd}
+        onPointerCancel={handlePointerEnd}
+        onClick={handleClick}
+        $selected={isSelected}
+        $length={lengthCategory}
+        $layout={layoutCategory}
+        disabled={disabled}
+        layout
+        initial={false}
+        animate={feedbackAnimation.animate}
+        transition={feedbackAnimation.transition}
+        style={
+          dragEnabled
+            ? { cursor: isDragging ? "grabbing" : isLockedOut ? "default" : "grab" }
+            : undefined
+        }
+      >
+        {card.label}
+      </WordButton>
+    </WordItem>
+  );
+};
 const WordGrid = ({
   words,
   selectedWordIds,
@@ -151,9 +492,22 @@ const WordGrid = ({
   wordFeedback,
   solvedCategories,
   disabled = false,
+  draggingWordId = null,
+  dragTargetWordId = null,
+  isDragLocked = false,
+  onWordDragStart,
+  onWordDragMove,
+  onWordDragEnd,
 }: WordGridProps) => {
   const handleReorder = onReorderWords ?? noopReorder;
   const feedbackMap = wordFeedback ?? {};
+  const dragEnabled =
+    typeof onWordDragStart === "function" &&
+    typeof onWordDragMove === "function" &&
+    typeof onWordDragEnd === "function";
+  const handleDragStart = onWordDragStart ?? noopWordDragStart;
+  const handleDragMove = onWordDragMove ?? noopWordDragMove;
+  const handleDragEnd = onWordDragEnd ?? noopWordDragEnd;
 
   return (
     <Grid>
@@ -194,34 +548,21 @@ const WordGrid = ({
           const animation = cardFeedbackAnimations[feedbackStatus];
 
           return (
-            <WordItem
+            <DraggableWordTile
               key={card.id}
-              value={card}
-              layoutId={card.id}
-              transition={{
-                layout: { duration: 0.4, ease: "easeInOut" },
-                opacity: { duration: 0.18 },
-                scale: { duration: 0.18 },
-              }}
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              drag={false}
-            >
-              <WordButton
-                type="button"
-                onClick={() => onToggleWord(card.id)}
-                $selected={selectedWordIds.includes(card.id)}
-                $length={getLengthCategory(card.label)}
-                $layout={getLayoutCategory(card.label)}
-                disabled={disabled}
-                layout
-                initial={false}
-                animate={animation.animate}
-                transition={animation.transition}
-              >
-                {card.label}
-              </WordButton>
-            </WordItem>
+              card={card}
+              isSelected={selectedWordIds.includes(card.id)}
+              disabled={disabled}
+              feedbackAnimation={animation}
+              draggingWordId={draggingWordId}
+              dragTargetWordId={dragTargetWordId}
+              isDragLocked={isDragLocked}
+              dragEnabled={dragEnabled}
+              onToggleWord={onToggleWord}
+              onWordDragStart={handleDragStart}
+              onWordDragMove={handleDragMove}
+              onWordDragEnd={handleDragEnd}
+            />
           );
         })}
       </WordList>
