@@ -9,19 +9,19 @@ interface StatusBarProps {
 const Container = styled.section`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
 `;
 
 const Label = styled.p`
   display: flex;
   align-items: center;
-  font-size: 15px;
+  font-size: 0.9375rem;
 `;
 
 const MistakeTrack = styled.div`
   display: inline-flex;
-  gap: 8px;
-  translate: 0px 1px;
+  gap: 0.5rem;
+  translate: 0 0.0625rem;
 `;
 
 const MistakePip = styled.span.attrs<{ $active: boolean; $reduceMotion: boolean }>(
@@ -32,13 +32,12 @@ const MistakePip = styled.span.attrs<{ $active: boolean; $reduceMotion: boolean 
     "data-motion": $reduceMotion ? "reduced" : "standard",
   }),
 )<{ $active: boolean; $reduceMotion: boolean }>`
-  --pip-active: #e36363;
-  --pip-spent: #f2d7b6;
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   border-radius: 50%;
   border: 1px solid rgba(46, 39, 27, 0.4);
-  background: ${({ $active }) => ($active ? "var(--pip-active)" : "var(--pip-spent)")};
+  background: ${({ $active }) =>
+    $active ? "var(--status-pip-active)" : "var(--status-pip-spent)"};
   transform: ${({ $active, $reduceMotion }) =>
     $reduceMotion || $active ? "scale(1)" : "scale(0.6)"};
   opacity: ${({ $active, $reduceMotion }) =>

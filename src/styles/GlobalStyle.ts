@@ -5,6 +5,8 @@ export const GlobalStyle = createGlobalStyle`
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     color: #1f1f1f;
     background-color: #f7f5f0;
+    --status-pip-active: #e36363;
+    --status-pip-spent: #f2d7b6;
   }
 
   *, *::before, *::after {
