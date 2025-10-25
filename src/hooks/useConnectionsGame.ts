@@ -22,14 +22,20 @@ interface UseConnectionsGameResult {
   orderedSolvedCategories: CategoryDefinition[];
   revealCategories: CategoryDefinition[];
   selectedWordIds: string[];
+  draggingWordId: string | null;
+  isDragLocked: boolean;
   mistakesAllowed: number;
   mistakesRemaining: number;
   status: GameStatus;
   onToggleWord: (wordId: string) => void;
   reorderWords: (nextOrder: WordCard[]) => void;
+  swapWordCards: (fromWordId: string, toWordId: string) => void;
   shuffleWords: () => void;
   clearSelection: () => void;
   submitSelection: () => void;
+  onWordDragStart: (wordId: string) => void;
+  onWordDragMove: (targetWordId: string) => void;
+  onWordDragEnd: () => void;
 }
 
 interface PendingSolve {
@@ -52,6 +58,8 @@ export const useConnectionsGame = (
   const [status, setStatus] = useState<GameStatus>("playing");
   const [pendingSolve, setPendingSolve] = useState<PendingSolve | null>(null);
   const [isMistakeAnimating, setIsMistakeAnimating] = useState(false);
+  const [draggingWordId, setDraggingWordId] = useState<string | null>(null);
+  const [isDragLocked, setIsDragLocked] = useState(false);
   const revealTimeoutRef = useRef<number | null>(null);
   const solveSortTimeoutRef = useRef<number | null>(null);
   const hopTimeoutsRef = useRef<number[]>([]);
@@ -84,6 +92,8 @@ export const useConnectionsGame = (
     setStatus("playing");
     setPendingSolve(null);
     setIsMistakeAnimating(false);
+    setDraggingWordId(null);
+    setIsDragLocked(false);
     setWordFeedback({});
     clearRevealTimeout();
     clearSolveSortTimeout();
@@ -97,7 +107,7 @@ export const useConnectionsGame = (
       clearSolveSortTimeout();
       clearSettleTimeouts();
       clearHopTimeouts();
-    },
+        },
     [],
   );
 
@@ -130,7 +140,7 @@ export const useConnectionsGame = (
   );
 
   const onToggleWord = (wordId: string) => {
-    if (status !== "playing" || isMistakeAnimating) {
+    if (status !== "playing" || isMistakeAnimating || isDragLocked) {
       return;
     }
 
@@ -150,7 +160,7 @@ export const useConnectionsGame = (
   };
 
   const shuffleWords = () => {
-    if (status !== "playing" || isMistakeAnimating) {
+    if (status !== "playing" || isMistakeAnimating || isDragLocked) {
       return;
     }
 
@@ -159,7 +169,7 @@ export const useConnectionsGame = (
   };
 
   const reorderWords = (nextOrder: WordCard[]) => {
-    if (status !== "playing" || isMistakeAnimating) {
+    if (status !== "playing" || isMistakeAnimating || isDragLocked) {
       return;
     }
     if (pendingSolve) {
@@ -169,7 +179,7 @@ export const useConnectionsGame = (
   };
 
   const clearSelection = () => {
-    if (status !== "playing" || isMistakeAnimating) {
+    if (status !== "playing" || isMistakeAnimating || isDragLocked) {
       return;
     }
 
@@ -183,7 +193,8 @@ export const useConnectionsGame = (
     if (
       status !== "playing" ||
       selectedWordIds.length !== 4 ||
-      isMistakeAnimating
+      isMistakeAnimating ||
+      isDragLocked
     ) {
       return;
     }
@@ -301,19 +312,72 @@ export const useConnectionsGame = (
     setSelectedWordIds([]);
   };
 
+  const swapWordCards = (fromWordId: string, toWordId: string) => {
+    if (
+      fromWordId === toWordId ||
+      status !== "playing" ||
+      isMistakeAnimating
+    ) {
+      return;
+    }
+    setAvailableWords((prev) => {
+      const fromIndex = prev.findIndex((card) => card.id === fromWordId);
+      const toIndex = prev.findIndex((card) => card.id === toWordId);
+      if (fromIndex === -1 || toIndex === -1) {
+        return prev;
+      }
+      const next = [...prev];
+      const temp = next[fromIndex];
+      next[fromIndex] = next[toIndex];
+      next[toIndex] = temp;
+      return next;
+    });
+  };
+
+  const onWordDragStart = (wordId: string) => {
+    if (
+      status !== "playing" ||
+      isMistakeAnimating ||
+      pendingSolve !== null ||
+      isDragLocked
+    ) {
+      return;
+    }
+    setDraggingWordId(wordId);
+    setIsDragLocked(true);
+  };
+
+  const onWordDragMove = (targetWordId: string) => {
+    if (!draggingWordId || draggingWordId === targetWordId) {
+      return;
+    }
+    swapWordCards(draggingWordId, targetWordId);
+  };
+
+  const onWordDragEnd = () => {
+    setDraggingWordId(null);
+    setIsDragLocked(false);
+  };
+
   return {
     availableWords,
     wordFeedback,
     orderedSolvedCategories,
     revealCategories,
     selectedWordIds,
+    draggingWordId,
+    isDragLocked,
     mistakesAllowed,
     mistakesRemaining,
     status,
     onToggleWord,
     reorderWords,
+    swapWordCards,
     shuffleWords,
     clearSelection,
     submitSelection,
+    onWordDragStart,
+    onWordDragMove,
+    onWordDragEnd,
   };
 };
