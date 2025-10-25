@@ -345,9 +345,7 @@ const DraggableWordTile = ({
 
   const handlePointerEnd = useCallback(() => {
     clearLongPressTimer();
-    if (!isDraggingRef.current) {
-      pendingPointerEventRef.current = null;
-    }
+    pendingPointerEventRef.current = null;
     initialPointerRef.current = null;
   }, [clearLongPressTimer]);
 
@@ -399,7 +397,7 @@ const DraggableWordTile = ({
   );
 
   const handleDragEnd = useCallback(() => {
-    if (dragEnabled) {
+    if (isDraggingRef.current && dragEnabled) {
       onWordDragEnd();
     }
     lastTargetRef.current = null;
