@@ -23,6 +23,7 @@ interface UseConnectionsGameResult {
   revealCategories: CategoryDefinition[];
   selectedWordIds: string[];
   draggingWordId: string | null;
+  dragTargetWordId: string | null;
   isDragLocked: boolean;
   mistakesAllowed: number;
   mistakesRemaining: number;
@@ -34,7 +35,7 @@ interface UseConnectionsGameResult {
   clearSelection: () => void;
   submitSelection: () => void;
   onWordDragStart: (wordId: string) => void;
-  onWordDragMove: (targetWordId: string) => void;
+  onWordDragMove: (targetWordId: string | null) => void;
   onWordDragEnd: () => void;
 }
 
@@ -59,6 +60,7 @@ export const useConnectionsGame = (
   const [pendingSolve, setPendingSolve] = useState<PendingSolve | null>(null);
   const [isMistakeAnimating, setIsMistakeAnimating] = useState(false);
   const [draggingWordId, setDraggingWordId] = useState<string | null>(null);
+  const [dragTargetWordId, setDragTargetWordId] = useState<string | null>(null);
   const [isDragLocked, setIsDragLocked] = useState(false);
   const revealTimeoutRef = useRef<number | null>(null);
   const solveSortTimeoutRef = useRef<number | null>(null);
@@ -93,6 +95,7 @@ export const useConnectionsGame = (
     setPendingSolve(null);
     setIsMistakeAnimating(false);
     setDraggingWordId(null);
+    setDragTargetWordId(null);
     setIsDragLocked(false);
     setWordFeedback({});
     clearRevealTimeout();
@@ -344,18 +347,27 @@ export const useConnectionsGame = (
       return;
     }
     setDraggingWordId(wordId);
+    setDragTargetWordId(null);
     setIsDragLocked(true);
   };
 
-  const onWordDragMove = (targetWordId: string) => {
-    if (!draggingWordId || draggingWordId === targetWordId) {
+  const onWordDragMove = (targetWordId: string | null) => {
+    if (!draggingWordId) {
       return;
     }
-    swapWordCards(draggingWordId, targetWordId);
+    if (!targetWordId || draggingWordId === targetWordId) {
+      setDragTargetWordId(null);
+      return;
+    }
+    setDragTargetWordId(targetWordId);
   };
 
   const onWordDragEnd = () => {
+    if (draggingWordId && dragTargetWordId) {
+      swapWordCards(draggingWordId, dragTargetWordId);
+    }
     setDraggingWordId(null);
+    setDragTargetWordId(null);
     setIsDragLocked(false);
   };
 
@@ -366,6 +378,7 @@ export const useConnectionsGame = (
     revealCategories,
     selectedWordIds,
     draggingWordId,
+    dragTargetWordId,
     isDragLocked,
     mistakesAllowed,
     mistakesRemaining,
