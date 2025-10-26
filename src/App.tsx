@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { formatPuzzleDateLabel, selectPuzzleForDate } from "./data/puzzles";
 import { useConnectionsGame } from "./hooks/useConnectionsGame";
 import { GlobalStyle } from "./styles/GlobalStyle";
+import { getWordMotionTracer, isWordMotionTracerEnabled } from "./game/tracing";
 import {
   CategoryGroupList,
   GameControls,
@@ -39,6 +40,18 @@ const App = () => {
   } = useConnectionsGame(puzzle);
 
   const [isResultOpen, setIsResultOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && isWordMotionTracerEnabled()) {
+      // Expose tracer for e2e tests in dev environments.
+      window.__wordMotionTracer = getWordMotionTracer();
+      return () => {
+        delete window.__wordMotionTracer;
+      };
+    }
+
+    return undefined;
+  }, []);
 
   useEffect(() => {
     if (status === "playing") {
