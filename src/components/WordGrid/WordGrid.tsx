@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 import {
   AnimatePresence,
@@ -16,7 +16,6 @@ import type {
   WordCardFeedbackMap,
   WordCardFeedbackStatus,
 } from "../../game/types";
-import { getWordMotionTracer, type WordMotionPoint } from "../../game/tracing";
 import { WordButton } from "./WordButton";
 
 interface WordGridProps {
@@ -246,110 +245,11 @@ const DraggableWordTile = ({
   onWordDragEnd,
 }: DraggableWordTileProps) => {
   const dragControls = useDragControls();
-  const tracer = useMemo(() => getWordMotionTracer(), []);
-  const tracerEnabled = tracer.isEnabled();
   const longPressTimeoutRef = useRef<number | null>(null);
   const pendingPointerEventRef = useRef<PointerEvent | null>(null);
   const isDraggingRef = useRef(false);
   const lastTargetRef = useRef<string | null>(null);
   const initialPointerRef = useRef<{ x: number; y: number } | null>(null);
-  const itemRef = useRef<HTMLDivElement | null>(null);
-  const samplingRafRef = useRef<number | null>(null);
-  const lastSampleRef = useRef<WordMotionPoint | null>(null);
-  const stationaryFrameCountRef = useRef(0);
-  const samplingActiveRef = useRef(false);
-
-  const POSITION_EPSILON_PX = 0.75;
-  const STATIONARY_FRAME_THRESHOLD = 5;
-
-  const stopSamplingLoop = useCallback(() => {
-    if (samplingRafRef.current !== null) {
-      cancelAnimationFrame(samplingRafRef.current);
-      samplingRafRef.current = null;
-    }
-    samplingActiveRef.current = false;
-    lastSampleRef.current = null;
-    stationaryFrameCountRef.current = 0;
-  }, []);
-
-  const recordPoint = useCallback(
-    (point: WordMotionPoint) => {
-      if (!tracerEnabled) {
-        return;
-      }
-      tracer.record(card.id, point);
-    },
-    [card.id, tracer, tracerEnabled],
-  );
-
-  const sampleCurrentPosition = useCallback(() => {
-    const element = itemRef.current;
-    if (!element) {
-      return null;
-    }
-    const rect = element.getBoundingClientRect();
-    return {
-      x: rect.left + rect.width / 2,
-      y: rect.top + rect.height / 2,
-    };
-  }, []);
-
-  const samplingStep = useCallback(() => {
-    samplingRafRef.current = null;
-    if (!samplingActiveRef.current) {
-      return;
-    }
-    const point = sampleCurrentPosition();
-    if (!point) {
-      stopSamplingLoop();
-      return;
-    }
-
-    recordPoint(point);
-
-    const lastPoint = lastSampleRef.current;
-    if (lastPoint) {
-      const deltaX = Math.abs(point.x - lastPoint.x);
-      const deltaY = Math.abs(point.y - lastPoint.y);
-      const isStationaryFrame =
-        !isDraggingRef.current && deltaX <= POSITION_EPSILON_PX && deltaY <= POSITION_EPSILON_PX;
-      stationaryFrameCountRef.current = isStationaryFrame
-        ? stationaryFrameCountRef.current + 1
-        : 0;
-    } else {
-      stationaryFrameCountRef.current = 0;
-    }
-
-    lastSampleRef.current = point;
-
-    if (!isDraggingRef.current && stationaryFrameCountRef.current >= STATIONARY_FRAME_THRESHOLD) {
-      tracer.stop(card.id);
-      stopSamplingLoop();
-      return;
-    }
-
-    samplingRafRef.current = requestAnimationFrame(samplingStep);
-  }, [
-    POSITION_EPSILON_PX,
-    STATIONARY_FRAME_THRESHOLD,
-    card.id,
-    recordPoint,
-    sampleCurrentPosition,
-    stopSamplingLoop,
-    tracer,
-  ]);
-
-  const startSampling = useCallback(() => {
-    if (!tracerEnabled) {
-      return;
-    }
-    samplingActiveRef.current = true;
-    stationaryFrameCountRef.current = 0;
-    lastSampleRef.current = null;
-    if (samplingRafRef.current === null) {
-      samplingRafRef.current = requestAnimationFrame(samplingStep);
-    }
-  }, [samplingStep, tracerEnabled]);
 
   const clearLongPressTimer = useCallback(() => {
     if (longPressTimeoutRef.current !== null) {
@@ -385,14 +285,6 @@ const DraggableWordTile = ({
         return;
       }
       clearLongPressTimer();
-      if (tracerEnabled) {
-        tracer.start(card.id);
-        const initialPoint = sampleCurrentPosition();
-        if (initialPoint) {
-          recordPoint(initialPoint);
-        }
-        startSampling();
-      }
       onWordDragStart(card.id);
       isDraggingRef.current = true;
       pointerEvent.preventDefault();
@@ -410,11 +302,6 @@ const DraggableWordTile = ({
       disabled,
       draggingWordId,
       isDragLocked,
-      recordPoint,
-      sampleCurrentPosition,
-      startSampling,
-      tracer,
-      tracerEnabled,
       onWordDragStart,
     ],
   );
@@ -505,11 +392,8 @@ const DraggableWordTile = ({
       }
       const nextTarget = findWordIdAtPoint(info.point, card.id);
       reportDragMove(nextTarget);
-      if (tracerEnabled) {
-        recordPoint(info.point);
-      }
     },
-    [card.id, dragEnabled, recordPoint, reportDragMove, tracerEnabled],
+    [card.id, dragEnabled, reportDragMove],
   );
 
   const handleDragEnd = useCallback(() => {
@@ -519,21 +403,11 @@ const DraggableWordTile = ({
     lastTargetRef.current = null;
     isDraggingRef.current = false;
     clearLongPressTimer();
-    if (tracerEnabled && samplingActiveRef.current) {
-      if (samplingRafRef.current === null) {
-        samplingRafRef.current = requestAnimationFrame(samplingStep);
-      }
-    } else if (tracerEnabled) {
-      tracer.stop(card.id);
-    }
   }, [
     card.id,
     clearLongPressTimer,
     dragEnabled,
     onWordDragEnd,
-    samplingStep,
-    tracer,
-    tracerEnabled,
   ]);
 
   const handleClick = useCallback(
@@ -565,17 +439,12 @@ const DraggableWordTile = ({
   useEffect(
     () => () => {
       clearLongPressTimer();
-      if (tracerEnabled) {
-        tracer.stop(card.id);
-      }
-      stopSamplingLoop();
     },
-    [card.id, clearLongPressTimer, stopSamplingLoop, tracer, tracerEnabled],
+    [clearLongPressTimer],
   );
 
   return (
     <WordItem
-      ref={itemRef}
       data-word-id={card.id}
       value={card}
       layoutId={card.id}

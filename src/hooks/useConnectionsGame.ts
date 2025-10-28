@@ -346,6 +346,10 @@ export const useConnectionsGame = (
     ) {
       return;
     }
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log("[drag/start]", wordId);
+    }
     setDraggingWordId(wordId);
     setDragTargetWordId(null);
     setIsDragLocked(true);
@@ -359,19 +363,36 @@ export const useConnectionsGame = (
       setDragTargetWordId(null);
       return;
     }
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log("[drag/move]", {
+        from: draggingWordId,
+        to: targetWordId,
+      });
+    }
     setDragTargetWordId(targetWordId);
   };
 
   const onWordDragEnd = () => {
     if (draggingWordId && dragTargetWordId) {
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.log("[drag/end]", {
+          from: draggingWordId,
+          to: dragTargetWordId,
+        });
+      }
       swapWordCards(draggingWordId, dragTargetWordId);
+    } else if (import.meta.env.DEV && draggingWordId) {
+      // eslint-disable-next-line no-console
+      console.log("[drag/end]", { from: draggingWordId, to: null });
     }
     setDraggingWordId(null);
     setDragTargetWordId(null);
     setIsDragLocked(false);
   };
 
-  return {
+  const result: UseConnectionsGameResult = {
     availableWords,
     wordFeedback,
     orderedSolvedCategories,
@@ -393,4 +414,6 @@ export const useConnectionsGame = (
     onWordDragMove,
     onWordDragEnd,
   };
+
+  return result;
 };

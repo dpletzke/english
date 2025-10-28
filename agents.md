@@ -65,7 +65,7 @@ public/                  // Static assets
 - **Primary Objective**: Maintain an intuitive, accessible learning game while adding features that deepen vocabulary practice.
 - **When Uncertain**: Default to reinforcing pedagogy—word clarity, consistent difficulty tiers, gentle error feedback.
 - **Testing Expectations**: Run `npm run build` for type checks; add targeted unit tests when modifying `/game` logic. For UI tweaks, rely on component-level testing or storybook snapshots once they exist.
-- **Instrumentation**: Dev/test builds expose a word-motion tracer (`window.__wordMotionTracer`) for Playwright: call `clear()`, drive a drag, then `getSamples()` to assert tile paths. Production bundles keep the API as a no-op.
+- **Instrumentation**: Dev/test builds no longer surface Playwright hooks; rely on component-level tests or manual QA when validating motion.
 - **Guardrails**:
   - Do not introduce server dependencies; this app is client-only.
   - Avoid bloating the hook with UI responsibilities—create helper functions instead.
