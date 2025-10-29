@@ -3,6 +3,10 @@ import { formatPuzzleDateLabel, selectPuzzleForDate } from "./data/puzzles";
 import { useConnectionsGame } from "./hooks/useConnectionsGame";
 import { GlobalStyle } from "./styles/GlobalStyle";
 import {
+  getWordMotionTracer,
+  isWordMotionTracerEnabled,
+} from "./game/tracing";
+import {
   CategoryGroupList,
   GameControls,
   GameHeader,
@@ -12,6 +16,12 @@ import {
   WordGrid,
   WordSection,
 } from "./components";
+
+declare global {
+  interface Window {
+    __wordMotionTracer?: ReturnType<typeof getWordMotionTracer>;
+  }
+}
 
 const App = () => {
   const puzzleSelection = useMemo(() => selectPuzzleForDate(new Date()), []);
@@ -29,6 +39,8 @@ const App = () => {
     draggingWordId,
     dragTargetWordId,
     isDragLocked,
+    pendingDragSettle,
+    clearPendingDragSettle,
     shuffleWords,
     onToggleWord,
     clearSelection,
@@ -39,6 +51,17 @@ const App = () => {
   } = useConnectionsGame(puzzle);
 
   const [isResultOpen, setIsResultOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && isWordMotionTracerEnabled()) {
+      window.__wordMotionTracer = getWordMotionTracer();
+      return () => {
+        delete window.__wordMotionTracer;
+      };
+    }
+
+    return undefined;
+  }, []);
 
   useEffect(() => {
     if (status === "playing") {
@@ -88,6 +111,8 @@ const App = () => {
               onWordDragStart={onWordDragStart}
               onWordDragMove={onWordDragMove}
               onWordDragEnd={onWordDragEnd}
+              pendingDragSettle={pendingDragSettle}
+              clearPendingDragSettle={clearPendingDragSettle}
             />
             <StatusBar
               mistakesAllowed={mistakesAllowed}

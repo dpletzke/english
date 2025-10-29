@@ -25,6 +25,8 @@ interface UseConnectionsGameResult {
   draggingWordId: string | null;
   dragTargetWordId: string | null;
   isDragLocked: boolean;
+  pendingDragSettle: DragSettleRequest | null;
+  clearPendingDragSettle: () => void;
   mistakesAllowed: number;
   mistakesRemaining: number;
   status: GameStatus;
@@ -42,6 +44,12 @@ interface UseConnectionsGameResult {
 interface PendingSolve {
   categoryId: string;
   wordIds: string[];
+}
+
+interface DragSettleRequest {
+  fromWordId: string;
+  toWordId: string;
+  requestId: number;
 }
 
 export const useConnectionsGame = (
@@ -62,6 +70,8 @@ export const useConnectionsGame = (
   const [draggingWordId, setDraggingWordId] = useState<string | null>(null);
   const [dragTargetWordId, setDragTargetWordId] = useState<string | null>(null);
   const [isDragLocked, setIsDragLocked] = useState(false);
+  const [pendingDragSettle, setPendingDragSettle] =
+    useState<DragSettleRequest | null>(null);
   const revealTimeoutRef = useRef<number | null>(null);
   const solveSortTimeoutRef = useRef<number | null>(null);
   const hopTimeoutsRef = useRef<number[]>([]);
@@ -97,6 +107,7 @@ export const useConnectionsGame = (
     setDraggingWordId(null);
     setDragTargetWordId(null);
     setIsDragLocked(false);
+    setPendingDragSettle(null);
     setWordFeedback({});
     clearRevealTimeout();
     clearSolveSortTimeout();
@@ -382,6 +393,21 @@ export const useConnectionsGame = (
           to: dragTargetWordId,
         });
       }
+      const settleRequest: DragSettleRequest = {
+        fromWordId: draggingWordId,
+        toWordId: dragTargetWordId,
+        requestId: Date.now(),
+      };
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.log("[drag/settle/request]", settleRequest);
+        // eslint-disable-next-line no-console
+        console.log(
+          "%cCheck that pendingDragSettle matches the swap in useConnectionsGame by inspecting the above log entry after a drag.",
+          "color:#0563bb;font-weight:600",
+        );
+      }
+      setPendingDragSettle(settleRequest);
       swapWordCards(draggingWordId, dragTargetWordId);
     } else if (import.meta.env.DEV && draggingWordId) {
       // eslint-disable-next-line no-console
@@ -390,6 +416,14 @@ export const useConnectionsGame = (
     setDraggingWordId(null);
     setDragTargetWordId(null);
     setIsDragLocked(false);
+  };
+
+  const clearPendingDragSettle = () => {
+    if (import.meta.env.DEV && pendingDragSettle) {
+      // eslint-disable-next-line no-console
+      console.log("[drag/settle/cleared]", pendingDragSettle);
+    }
+    setPendingDragSettle(null);
   };
 
   const result: UseConnectionsGameResult = {
@@ -401,6 +435,7 @@ export const useConnectionsGame = (
     draggingWordId,
     dragTargetWordId,
     isDragLocked,
+    pendingDragSettle,
     mistakesAllowed,
     mistakesRemaining,
     status,
@@ -413,6 +448,7 @@ export const useConnectionsGame = (
     onWordDragStart,
     onWordDragMove,
     onWordDragEnd,
+    clearPendingDragSettle,
   };
 
   return result;

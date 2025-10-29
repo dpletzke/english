@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 import {
   AnimatePresence,
@@ -32,6 +32,8 @@ interface WordGridProps {
   onWordDragStart?: (wordId: string) => void;
   onWordDragMove?: (targetWordId: string | null) => void;
   onWordDragEnd?: () => void;
+  pendingDragSettle?: DragSettleRequest | null;
+  clearPendingDragSettle?: () => void;
 }
 
 const Grid = styled.div`
@@ -146,6 +148,10 @@ const noopWordDragEnd = () => {
   /* no-op */
 };
 
+const noopClearPendingSettle = () => {
+  /* no-op */
+};
+
 type CardFeedbackAnimation = {
   animate: {
     x?: number | number[];
@@ -153,6 +159,20 @@ type CardFeedbackAnimation = {
     scale: number | number[];
   };
   transition: Transition;
+};
+
+type DragSettleRequest = {
+  fromWordId: string;
+  toWordId: string;
+  requestId: number;
+};
+
+type DragSettleSnapshot = {
+  fromWordId: string;
+  toWordId: string;
+  fromRect: DOMRect;
+  toRect: DOMRect;
+  recordedAt: number;
 };
 
 const hopKeyframes: number[] = [0, -18, 0];
@@ -228,6 +248,7 @@ interface DraggableWordTileProps {
   onWordDragStart: (wordId: string) => void;
   onWordDragMove: (targetWordId: string | null) => void;
   onWordDragEnd: () => void;
+  reportDragSettle: (snapshot: DragSettleSnapshot | null) => void;
 }
 
 const DraggableWordTile = ({
@@ -243,8 +264,42 @@ const DraggableWordTile = ({
   onWordDragStart,
   onWordDragMove,
   onWordDragEnd,
+  reportDragSettle,
 }: DraggableWordTileProps) => {
   const dragControls = useDragControls();
+  const itemRef = useRef<HTMLDivElement | null>(null);
+  const logWordAnimation = useCallback(
+    (phase: "start" | "complete", detail?: Record<string, unknown>) => {
+      if (!import.meta.env.DEV) {
+        return;
+      }
+      // eslint-disable-next-line no-console
+      console.log(`[motion][word] ${phase}`, {
+        wordId: card.id,
+        detail,
+        animate: feedbackAnimation.animate,
+        transition: feedbackAnimation.transition,
+      });
+    },
+    [card.id, feedbackAnimation],
+  );
+  const logLayoutAnimation = useCallback(
+    (phase: "start" | "complete") => {
+      if (!import.meta.env.DEV) {
+        return;
+      }
+      // eslint-disable-next-line no-console
+      console.log(`[motion][layout] ${phase}`, {
+        wordId: card.id,
+        transition: {
+          layout: { duration: 0.4, ease: "easeInOut" },
+          opacity: { duration: 0.18 },
+          scale: { duration: 0.18 },
+        },
+      });
+    },
+    [card.id],
+  );
   const longPressTimeoutRef = useRef<number | null>(null);
   const pendingPointerEventRef = useRef<PointerEvent | null>(null);
   const isDraggingRef = useRef(false);
@@ -397,8 +452,56 @@ const DraggableWordTile = ({
   );
 
   const handleDragEnd = useCallback(() => {
+    const targetId = lastTargetRef.current;
     if (isDraggingRef.current && dragEnabled) {
+      if (targetId && itemRef.current && typeof document !== "undefined") {
+        const fromRect = itemRef.current.getBoundingClientRect();
+        const targetElement = document.querySelector<HTMLElement>(
+          `[data-word-id="${targetId}"]`,
+        );
+        const toRect = targetElement?.getBoundingClientRect();
+        if (fromRect && toRect) {
+          const snapshot: DragSettleSnapshot = {
+            fromWordId: card.id,
+            toWordId: targetId,
+            fromRect,
+            toRect,
+            recordedAt: performance.now(),
+          };
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.log("[drag/geometry]", snapshot);
+            // eslint-disable-next-line no-console
+            console.log(
+              "%cVerify the geometry snapshot above before the swap runs. You should see fromRect/toRect values that match the pre-swap layout.",
+              "color:#c81e1e;font-weight:600",
+            );
+          }
+          reportDragSettle(snapshot);
+        } else {
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.warn("[drag/geometry] missing rects", {
+              fromRect: Boolean(fromRect),
+              toRect: Boolean(toRect),
+              targetId,
+            });
+          }
+          reportDragSettle(null);
+        }
+      } else {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.warn("[drag/geometry] skipped", {
+            targetId,
+            hasItemRef: Boolean(itemRef.current),
+          });
+        }
+        reportDragSettle(null);
+      }
       onWordDragEnd();
+    } else {
+      reportDragSettle(null);
     }
     lastTargetRef.current = null;
     isDraggingRef.current = false;
@@ -408,6 +511,7 @@ const DraggableWordTile = ({
     clearLongPressTimer,
     dragEnabled,
     onWordDragEnd,
+    reportDragSettle,
   ]);
 
   const handleClick = useCallback(
@@ -445,6 +549,7 @@ const DraggableWordTile = ({
 
   return (
     <WordItem
+      ref={itemRef}
       data-word-id={card.id}
       value={card}
       layoutId={card.id}
@@ -462,6 +567,8 @@ const DraggableWordTile = ({
       dragMomentum={false}
       onDrag={handleDrag}
       onDragEnd={handleDragEnd}
+      onLayoutAnimationStart={() => logLayoutAnimation("start")}
+      onLayoutAnimationComplete={() => logLayoutAnimation("complete")}
       $isDropTarget={isDropTarget}
       $isLockedOut={isLockedOut}
       $isDragging={isDragging}
@@ -484,6 +591,8 @@ const DraggableWordTile = ({
         initial={false}
         animate={feedbackAnimation.animate}
         transition={feedbackAnimation.transition}
+        onAnimationStart={() => logWordAnimation("start")}
+        onAnimationComplete={() => logWordAnimation("complete")}
         data-dragging={isDragging ? "true" : undefined}
         style={buttonCursor ? { cursor: buttonCursor } : undefined}
       >
@@ -506,6 +615,8 @@ const WordGrid = ({
   onWordDragStart,
   onWordDragMove,
   onWordDragEnd,
+  pendingDragSettle = null,
+  clearPendingDragSettle,
 }: WordGridProps) => {
   const handleReorder = onReorderWords ?? noopReorder;
   const feedbackMap = wordFeedback ?? {};
@@ -516,6 +627,75 @@ const WordGrid = ({
   const handleDragStart = onWordDragStart ?? noopWordDragStart;
   const handleDragMove = onWordDragMove ?? noopWordDragMove;
   const handleDragEnd = onWordDragEnd ?? noopWordDragEnd;
+  const handleClearPendingSettle =
+    clearPendingDragSettle ?? noopClearPendingSettle;
+  const [pendingDragSnapshot, setPendingDragSnapshot] =
+    useState<DragSettleSnapshot | null>(null);
+
+  const handleReportDragSettle = useCallback(
+    (snapshot: DragSettleSnapshot | null) => {
+      setPendingDragSnapshot(snapshot);
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.log("[drag/geometry/state]", {
+          snapshot,
+          pendingDragSettle,
+        });
+        if (snapshot && pendingDragSettle) {
+          // eslint-disable-next-line no-console
+          console.log(
+            "%cEnsure snapshot.fromWordId matches pendingDragSettle.fromWordId before using it for animation.",
+            "color:#1d7f2c;font-weight:600",
+          );
+        }
+      }
+    },
+    [pendingDragSettle],
+  );
+
+  useEffect(() => {
+    if (!pendingDragSettle) {
+      return;
+    }
+    if (!pendingDragSnapshot) {
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.log("[drag/geometry/waiting]", pendingDragSettle);
+      }
+      return;
+    }
+    if (
+      pendingDragSnapshot.fromWordId !== pendingDragSettle.fromWordId ||
+      pendingDragSnapshot.toWordId !== pendingDragSettle.toWordId
+    ) {
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.warn("[drag/geometry/mismatch]", {
+          snapshot: pendingDragSnapshot,
+          request: pendingDragSettle,
+        });
+      }
+      return;
+    }
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log("[drag/geometry/matched]", {
+        snapshot: pendingDragSnapshot,
+        request: pendingDragSettle,
+      });
+      // eslint-disable-next-line no-console
+      console.log(
+        "%cConfirm the matched geometry before moving on to animation.",
+        "color:#af6200;font-weight:600",
+      );
+    }
+    setPendingDragSnapshot(null);
+    handleClearPendingSettle();
+  }, [
+    handleClearPendingSettle,
+    pendingDragSettle,
+    pendingDragSnapshot,
+  ]);
 
   return (
     <Grid>
@@ -570,6 +750,7 @@ const WordGrid = ({
               onWordDragStart={handleDragStart}
               onWordDragMove={handleDragMove}
               onWordDragEnd={handleDragEnd}
+              reportDragSettle={handleReportDragSettle}
             />
           );
         })}
