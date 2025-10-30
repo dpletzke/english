@@ -27,6 +27,8 @@ interface UseConnectionsGameResult {
   isDragLocked: boolean;
   pendingDragSettle: DragSettleRequest | null;
   clearPendingDragSettle: () => void;
+  layoutLockedWordId: string | null;
+  clearLayoutLockedWord: () => void;
   mistakesAllowed: number;
   mistakesRemaining: number;
   status: GameStatus;
@@ -52,6 +54,11 @@ interface DragSettleRequest {
   requestId: number;
 }
 
+type LayoutLockContext = {
+  wordId: string;
+  requestId: number;
+};
+
 export const useConnectionsGame = (
   puzzle: ConnectionsPuzzle,
 ): UseConnectionsGameResult => {
@@ -72,6 +79,8 @@ export const useConnectionsGame = (
   const [isDragLocked, setIsDragLocked] = useState(false);
   const [pendingDragSettle, setPendingDragSettle] =
     useState<DragSettleRequest | null>(null);
+  const [layoutLockContext, setLayoutLockContext] =
+    useState<LayoutLockContext | null>(null);
   const revealTimeoutRef = useRef<number | null>(null);
   const solveSortTimeoutRef = useRef<number | null>(null);
   const hopTimeoutsRef = useRef<number[]>([]);
@@ -108,6 +117,7 @@ export const useConnectionsGame = (
     setDragTargetWordId(null);
     setIsDragLocked(false);
     setPendingDragSettle(null);
+    setLayoutLockContext(null);
     setWordFeedback({});
     clearRevealTimeout();
     clearSolveSortTimeout();
@@ -357,10 +367,6 @@ export const useConnectionsGame = (
     ) {
       return;
     }
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
-      console.log("[drag/start]", wordId);
-    }
     setDraggingWordId(wordId);
     setDragTargetWordId(null);
     setIsDragLocked(true);
@@ -372,46 +378,34 @@ export const useConnectionsGame = (
     }
     if (!targetWordId || draggingWordId === targetWordId) {
       setDragTargetWordId(null);
+      setLayoutLockContext(null);
       return;
     }
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
-      console.log("[drag/move]", {
-        from: draggingWordId,
-        to: targetWordId,
-      });
-    }
+    setLayoutLockContext((prev) => {
+      if (prev && prev.wordId === draggingWordId) {
+        return prev;
+      }
+      return {
+        wordId: draggingWordId,
+        requestId: Date.now(),
+      };
+    });
     setDragTargetWordId(targetWordId);
   };
 
   const onWordDragEnd = () => {
     if (draggingWordId && dragTargetWordId) {
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.log("[drag/end]", {
-          from: draggingWordId,
-          to: dragTargetWordId,
-        });
-      }
       const settleRequest: DragSettleRequest = {
         fromWordId: draggingWordId,
         toWordId: dragTargetWordId,
         requestId: Date.now(),
       };
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.log("[drag/settle/request]", settleRequest);
-        // eslint-disable-next-line no-console
-        console.log(
-          "%cCheck that pendingDragSettle matches the swap in useConnectionsGame by inspecting the above log entry after a drag.",
-          "color:#0563bb;font-weight:600",
-        );
-      }
+      setLayoutLockContext({
+        wordId: draggingWordId,
+        requestId: settleRequest.requestId,
+      });
       setPendingDragSettle(settleRequest);
       swapWordCards(draggingWordId, dragTargetWordId);
-    } else if (import.meta.env.DEV && draggingWordId) {
-      // eslint-disable-next-line no-console
-      console.log("[drag/end]", { from: draggingWordId, to: null });
     }
     setDraggingWordId(null);
     setDragTargetWordId(null);
@@ -419,11 +413,11 @@ export const useConnectionsGame = (
   };
 
   const clearPendingDragSettle = () => {
-    if (import.meta.env.DEV && pendingDragSettle) {
-      // eslint-disable-next-line no-console
-      console.log("[drag/settle/cleared]", pendingDragSettle);
-    }
     setPendingDragSettle(null);
+  };
+
+  const clearLayoutLockedWord = () => {
+    setLayoutLockContext(null);
   };
 
   const result: UseConnectionsGameResult = {
@@ -449,6 +443,8 @@ export const useConnectionsGame = (
     onWordDragMove,
     onWordDragEnd,
     clearPendingDragSettle,
+    layoutLockedWordId: layoutLockContext?.wordId ?? null,
+    clearLayoutLockedWord,
   };
 
   return result;

@@ -41,6 +41,8 @@ const App = () => {
     isDragLocked,
     pendingDragSettle,
     clearPendingDragSettle,
+    layoutLockedWordId,
+    clearLayoutLockedWord,
     shuffleWords,
     onToggleWord,
     clearSelection,
@@ -113,6 +115,8 @@ const App = () => {
               onWordDragEnd={onWordDragEnd}
               pendingDragSettle={pendingDragSettle}
               clearPendingDragSettle={clearPendingDragSettle}
+              layoutLockedWordId={layoutLockedWordId}
+              clearLayoutLockedWord={clearLayoutLockedWord}
             />
             <StatusBar
               mistakesAllowed={mistakesAllowed}
