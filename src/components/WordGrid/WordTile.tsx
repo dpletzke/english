@@ -69,9 +69,9 @@ interface WordTileProps {
   isDragLocked: boolean;
   dragEnabled: boolean;
   onToggleWord: (wordId: string) => void;
-  onWordDragStart: (wordId: string) => void;
-  onWordDragMove: (targetWordId: string | null) => void;
-  onWordDragEnd: () => void;
+  onWordDragStart?: (wordId: string) => void;
+  onWordDragMove?: (targetWordId: string | null) => void;
+  onWordDragEnd?: () => void;
   reportDragSettle: (snapshot: DragSettleSnapshot | null) => void;
   settleDelta: DragSettleDelta | null;
   onSettleDeltaConsumed: (requestId: number) => void;

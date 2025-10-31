@@ -16,6 +16,7 @@ import {
   WordGrid,
   WordSection,
 } from "./components";
+import type { WordGridDragConfig } from "./components/WordGrid/WordGrid.types";
 
 declare global {
   interface Window {
@@ -85,6 +86,19 @@ const App = () => {
     setIsResultOpen(false);
   };
 
+  const dragConfig: WordGridDragConfig = {
+    draggingWordId,
+    dragTargetWordId,
+    isDragLocked,
+    onWordDragStart,
+    onWordDragMove,
+    onWordDragEnd,
+    pendingDragSettle,
+    clearPendingDragSettle,
+    layoutLockedWordId,
+    clearLayoutLockedWord,
+  };
+
   return (
     <>
       <GlobalStyle />
@@ -107,16 +121,7 @@ const App = () => {
               wordFeedback={wordFeedback}
               solvedCategories={orderedSolvedCategories}
               disabled={!isPlaying}
-              draggingWordId={draggingWordId}
-              dragTargetWordId={dragTargetWordId}
-              isDragLocked={isDragLocked}
-              onWordDragStart={onWordDragStart}
-              onWordDragMove={onWordDragMove}
-              onWordDragEnd={onWordDragEnd}
-              pendingDragSettle={pendingDragSettle}
-              clearPendingDragSettle={clearPendingDragSettle}
-              layoutLockedWordId={layoutLockedWordId}
-              clearLayoutLockedWord={clearLayoutLockedWord}
+              dragConfig={dragConfig}
             />
             <StatusBar
               mistakesAllowed={mistakesAllowed}

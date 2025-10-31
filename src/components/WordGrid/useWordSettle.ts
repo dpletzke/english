@@ -1,36 +1,36 @@
 import { useCallback, useEffect, useState } from "react";
 import type {
   DragSettleDelta,
-  DragSettleRequest,
   DragSettleSnapshot,
+  WordGridDragConfig,
 } from "./WordGrid.types";
-
-interface UseWordSettleParams {
-  pendingDragSettle: DragSettleRequest | null;
-  clearPendingDragSettle: () => void;
-  clearLayoutLockedWord: () => void;
-  onSettleDeltaConsumed: (requestId: number) => void;
-}
 
 interface UseWordSettleResult {
   activeSettleDelta: DragSettleDelta | null;
   reportDragSettle: (snapshot: DragSettleSnapshot | null) => void;
-  handleTileSettleConsumed: (requestId: number) => void;
+  consumeSettleDelta: (requestId: number) => void;
 }
 
-export const useWordSettle = ({
-  pendingDragSettle,
-  clearPendingDragSettle,
-  clearLayoutLockedWord,
-  onSettleDeltaConsumed,
-}: UseWordSettleParams): UseWordSettleResult => {
+export const useWordSettle = (
+  dragConfig: WordGridDragConfig | null | undefined,
+): UseWordSettleResult => {
   const [pendingDragSnapshot, setPendingDragSnapshot] =
     useState<DragSettleSnapshot | null>(null);
   const [activeSettleDelta, setActiveSettleDelta] =
     useState<DragSettleDelta | null>(null);
 
+  const pendingDragSettle = dragConfig?.pendingDragSettle ?? null;
+  const clearPendingDragSettle = dragConfig?.clearPendingDragSettle;
+  const clearLayoutLockedWord = dragConfig?.clearLayoutLockedWord;
+  const onSettleDeltaConsumed = dragConfig?.onSettleDeltaConsumed;
+
   const reportDragSettle = useCallback(
     (snapshot: DragSettleSnapshot | null) => {
+      if (!clearPendingDragSettle || !clearLayoutLockedWord) {
+        setPendingDragSnapshot(null);
+        setActiveSettleDelta(null);
+        return;
+      }
       setPendingDragSnapshot(snapshot);
       if (!snapshot) {
         setActiveSettleDelta(null);
@@ -41,19 +41,33 @@ export const useWordSettle = ({
     [clearLayoutLockedWord, clearPendingDragSettle],
   );
 
-  const handleTileSettleConsumed = useCallback(
+  const consumeSettleDelta = useCallback(
     (requestId: number) => {
+      if (!clearLayoutLockedWord) {
+        return;
+      }
       if (activeSettleDelta && activeSettleDelta.requestId === requestId) {
         setActiveSettleDelta(null);
       }
-      onSettleDeltaConsumed(requestId);
+      onSettleDeltaConsumed?.(requestId);
       clearLayoutLockedWord();
     },
     [activeSettleDelta, clearLayoutLockedWord, onSettleDeltaConsumed],
   );
 
   useEffect(() => {
-    if (!pendingDragSettle) {
+    if (!dragConfig) {
+      if (pendingDragSnapshot !== null) {
+        setPendingDragSnapshot(null);
+      }
+      if (activeSettleDelta !== null) {
+        setActiveSettleDelta(null);
+      }
+    }
+  }, [dragConfig, pendingDragSnapshot, activeSettleDelta]);
+
+  useEffect(() => {
+    if (!pendingDragSettle || !clearPendingDragSettle) {
       return;
     }
     if (!pendingDragSnapshot) {
@@ -81,11 +95,15 @@ export const useWordSettle = ({
     setActiveSettleDelta(settleDelta);
     setPendingDragSnapshot(null);
     clearPendingDragSettle();
-  }, [clearPendingDragSettle, pendingDragSettle, pendingDragSnapshot]);
+  }, [
+    clearPendingDragSettle,
+    pendingDragSettle,
+    pendingDragSnapshot,
+  ]);
 
   return {
-    activeSettleDelta,
+    activeSettleDelta: dragConfig ? activeSettleDelta : null,
     reportDragSettle,
-    handleTileSettleConsumed,
+    consumeSettleDelta,
   };
 };

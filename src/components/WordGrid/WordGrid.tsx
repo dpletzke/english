@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, Reorder } from "framer-motion";
 import styled from "styled-components";
 import type { CategoryDefinition } from "../../data/puzzles";
@@ -10,11 +9,8 @@ import type {
 import { SolvedCategoryTile } from "./SolvedCategoryTile";
 import { WordTile } from "./WordTile";
 import { CARD_FEEDBACK_ANIMATIONS } from "./animations";
-import type {
-  DragSettleDelta,
-  DragSettleRequest,
-  DragSettleSnapshot,
-} from "./WordGrid.types";
+import type { WordGridDragConfig } from "./WordGrid.types";
+import { useWordSettle } from "./useWordSettle";
 
 interface WordGridProps {
   words: WordCard[];
@@ -24,17 +20,7 @@ interface WordGridProps {
   wordFeedback?: WordCardFeedbackMap;
   solvedCategories: CategoryDefinition[];
   disabled?: boolean;
-  draggingWordId?: string | null;
-  dragTargetWordId?: string | null;
-  isDragLocked?: boolean;
-  onWordDragStart?: (wordId: string) => void;
-  onWordDragMove?: (targetWordId: string | null) => void;
-  onWordDragEnd?: () => void;
-  pendingDragSettle?: DragSettleRequest | null;
-  clearPendingDragSettle?: () => void;
-  onSettleDeltaConsumed?: (requestId: number) => void;
-  layoutLockedWordId?: string | null;
-  clearLayoutLockedWord?: () => void;
+  dragConfig?: WordGridDragConfig;
 }
 
 const Grid = styled.div`
@@ -53,34 +39,6 @@ const WordList = styled(Reorder.Group)`
   display: contents;
 `;
 
-const noopReorder: (nextOrder: WordCard[]) => void = () => {
-  /* no-op */
-};
-
-const noopWordDragStart = () => {
-  /* no-op */
-};
-
-const noopWordDragMove = (_target: string | null) => {
-  /* no-op */
-};
-
-const noopWordDragEnd = () => {
-  /* no-op */
-};
-
-const noopClearPendingSettle = () => {
-  /* no-op */
-};
-
-const noopSettleConsumed = (_requestId: number) => {
-  /* no-op */
-};
-
-const noopClearLayoutLock = () => {
-  /* no-op */
-};
-
 const WordGrid = ({
   words,
   selectedWordIds,
@@ -88,90 +46,46 @@ const WordGrid = ({
   onReorderWords,
   solvedCategories,
   disabled = false,
-  draggingWordId = null,
-  dragTargetWordId = null,
-  isDragLocked = false,
-  onWordDragStart,
-  onWordDragMove,
-  onWordDragEnd,
-  pendingDragSettle = null,
-  clearPendingDragSettle,
-  onSettleDeltaConsumed,
-  layoutLockedWordId = null,
-  clearLayoutLockedWord,
   wordFeedback,
+  dragConfig,
 }: WordGridProps) => {
-  const handleReorder = onReorderWords ?? noopReorder;
+  const draggingWordId = dragConfig?.draggingWordId ?? null;
+  const dragTargetWordId = dragConfig?.dragTargetWordId ?? null;
+  const isDragLocked = dragConfig?.isDragLocked ?? false;
   const feedbackMap = wordFeedback ?? {};
-  const dragEnabled =
-    typeof onWordDragStart === "function" &&
-    typeof onWordDragMove === "function" &&
-    typeof onWordDragEnd === "function";
-  const handleDragStart = onWordDragStart ?? noopWordDragStart;
-  const handleDragMove = onWordDragMove ?? noopWordDragMove;
-  const handleDragEnd = onWordDragEnd ?? noopWordDragEnd;
-  const handleClearPendingSettle =
-    clearPendingDragSettle ?? noopClearPendingSettle;
-  const handleSettleConsumed = onSettleDeltaConsumed ?? noopSettleConsumed;
-  const handleClearLayoutLock = clearLayoutLockedWord ?? noopClearLayoutLock;
-  const [pendingDragSnapshot, setPendingDragSnapshot] =
-    useState<DragSettleSnapshot | null>(null);
-  const [activeSettleDelta, setActiveSettleDelta] =
-    useState<DragSettleDelta | null>(null);
+  const dragEnabled = Boolean(dragConfig);
+  const { activeSettleDelta, reportDragSettle, consumeSettleDelta } =
+    useWordSettle(dragConfig);
 
-  const handleReportDragSettle = useCallback(
-    (snapshot: DragSettleSnapshot | null) => {
-      setPendingDragSnapshot(snapshot);
-      if (!snapshot) {
-        setActiveSettleDelta(null);
-        handleClearPendingSettle();
-        handleClearLayoutLock();
-      }
-    },
-    [handleClearLayoutLock, handleClearPendingSettle],
-  );
-
-  const handleTileSettleConsumed = useCallback(
-    (requestId: number) => {
-      if (activeSettleDelta && activeSettleDelta.requestId === requestId) {
-        setActiveSettleDelta(null);
-      }
-      handleSettleConsumed(requestId);
-      handleClearLayoutLock();
-    },
-    [activeSettleDelta, handleClearLayoutLock, handleSettleConsumed],
-  );
-
-  useEffect(() => {
-    if (!pendingDragSettle) {
-      return;
+  const handleReorder = (order: unknown[]) => {
+    if (onReorderWords) {
+      onReorderWords(order as WordCard[]);
     }
-    if (!pendingDragSnapshot) {
-      return;
+  };
+
+  const isLayoutLocked = (cardId: string) => {
+    if (!dragConfig) {
+      return false;
+    }
+    if (dragConfig.layoutLockedWordId === cardId) {
+      return true;
     }
     if (
-      pendingDragSnapshot.fromWordId !== pendingDragSettle.fromWordId ||
-      pendingDragSnapshot.toWordId !== pendingDragSettle.toWordId
+      dragConfig.pendingDragSettle &&
+      dragConfig.pendingDragSettle.fromWordId === cardId
     ) {
-      return;
+      return true;
     }
-    const deltaX =
-      pendingDragSnapshot.fromRect.left - pendingDragSnapshot.toRect.left;
-    const deltaY =
-      pendingDragSnapshot.fromRect.top - pendingDragSnapshot.toRect.top;
-    const now =
-      typeof performance !== "undefined" ? performance.now() : Date.now();
-    const settleDelta: DragSettleDelta = {
-      wordId: pendingDragSnapshot.fromWordId,
-      deltaX,
-      deltaY,
-      requestId: pendingDragSettle.requestId,
-      recordedAt: now,
-    };
-    setActiveSettleDelta(settleDelta);
-    setPendingDragSnapshot(null);
-    handleClearPendingSettle();
-  }, [handleClearPendingSettle, pendingDragSettle, pendingDragSnapshot]);
+    if (activeSettleDelta && activeSettleDelta.wordId === cardId) {
+      return true;
+    }
+    return false;
+  };
+
+  const settleDeltaForCard = (cardId: string) =>
+    activeSettleDelta && activeSettleDelta.wordId === cardId
+      ? activeSettleDelta
+      : null;
 
   return (
     <Grid>
@@ -186,18 +100,13 @@ const WordGrid = ({
       <WordList
         axis="y"
         values={words}
-        onReorder={(order) => handleReorder(order as WordCard[])}
+        onReorder={handleReorder}
         layoutScroll
       >
         {words.map((card) => {
           const feedbackStatus: WordCardFeedbackStatus =
             feedbackMap[card.id] ?? "idle";
           const animation = CARD_FEEDBACK_ANIMATIONS[feedbackStatus];
-          const layoutLocked = Boolean(
-            (layoutLockedWordId && layoutLockedWordId === card.id) ||
-              (pendingDragSettle && pendingDragSettle.fromWordId === card.id) ||
-              (activeSettleDelta && activeSettleDelta.wordId === card.id),
-          );
 
           return (
             <WordTile
@@ -211,17 +120,13 @@ const WordGrid = ({
               isDragLocked={isDragLocked}
               dragEnabled={dragEnabled}
               onToggleWord={onToggleWord}
-              onWordDragStart={handleDragStart}
-              onWordDragMove={handleDragMove}
-              onWordDragEnd={handleDragEnd}
-              reportDragSettle={handleReportDragSettle}
-              settleDelta={
-                activeSettleDelta && activeSettleDelta.wordId === card.id
-                  ? activeSettleDelta
-                  : null
-              }
-              isLayoutLocked={layoutLocked}
-              onSettleDeltaConsumed={handleTileSettleConsumed}
+              onWordDragStart={dragConfig?.onWordDragStart}
+              onWordDragMove={dragConfig?.onWordDragMove}
+              onWordDragEnd={dragConfig?.onWordDragEnd}
+              reportDragSettle={reportDragSettle}
+              settleDelta={settleDeltaForCard(card.id)}
+              isLayoutLocked={isLayoutLocked(card.id)}
+              onSettleDeltaConsumed={consumeSettleDelta}
             />
           );
         })}

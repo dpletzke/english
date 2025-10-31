@@ -41,9 +41,9 @@ export type TileDragParams = {
   isDragLocked: boolean;
   draggingWordId: string | null;
   dragTargetWordId: string | null;
-  onWordDragStart: (wordId: string) => void;
-  onWordDragMove: (targetWordId: string | null) => void;
-  onWordDragEnd: () => void;
+  onWordDragStart?: (wordId: string) => void;
+  onWordDragMove?: (targetWordId: string | null) => void;
+  onWordDragEnd?: () => void;
   reportDragSettle: (snapshot: DragSettleSnapshot | null) => void;
 };
 
@@ -116,7 +116,7 @@ export const useTileDrag = ({
         return;
       }
       lastTargetRef.current = nextTarget;
-      onWordDragMove(nextTarget);
+      onWordDragMove?.(nextTarget);
     },
     [dragEnabled, onWordDragMove],
   );
@@ -130,7 +130,7 @@ export const useTileDrag = ({
         return;
       }
       clearLongPressTimer();
-      onWordDragStart(cardId);
+      onWordDragStart?.(cardId);
       isDraggingRef.current = true;
       pointerEvent.preventDefault();
       pointerEvent.stopPropagation();
@@ -264,7 +264,7 @@ export const useTileDrag = ({
       } else {
         reportDragSettle(null);
       }
-      onWordDragEnd();
+      onWordDragEnd?.();
     } else {
       reportDragSettle(null);
     }

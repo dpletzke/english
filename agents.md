@@ -79,4 +79,29 @@ public/                  // Static assets
 3. Audio pronunciation support for each word to aid language learners.
 4. Admin puzzle builder UI for educators to create custom sets.
 
+## Pending Refactors
+
+### Bundle WordGrid Drag Configuration
+
+1. **Introduce Types**
+   - Define a `WordGridDragConfig` interface that groups drag state (`draggingWordId`, `dragTargetWordId`, `isDragLocked`), handlers (start/move/end), settle lifecycle (`pendingDragSettle`, `clearPendingDragSettle`, `onSettleDeltaConsumed`), and layout lock data.
+   - Update `WordGridProps` to accept an optional `dragConfig?: WordGridDragConfig` instead of individual optional fields.
+
+2. **Update Hooks**
+   - Change `useWordSettle` to accept the full `WordGridDragConfig` or `null`, returning no-op handlers when drag is disabled.
+   - Expose helpers (`reportDragSettle`, `consumeSettleDelta`, optional `isLayoutLocked`) so `WordGrid` stays declarative.
+
+3. **Refactor WordGrid**
+   - Derive `dragEnabled` from `dragConfig` and remove local `noop*` functions.
+   - Pass drag props to `WordTile` only when `dragConfig` exists; otherwise rely on tap-only behavior.
+   - Centralize layout-lock derivation using data from the hook/bundle to avoid duplicated conditionals.
+
+4. **Consumers & Tests**
+   - Update `App.tsx` to assemble a `dragConfig` object before rendering `WordGrid`.
+   - Adjust `WordGrid.test.tsx` to cover both baseline (no drag) and drag-enabled scenarios.
+
+5. **Verification**
+   - Run `npm run build` for type checks.
+   - Execute relevant tests to ensure drag interactions and settle animations remain intact.
+
 Keeping this document current lets any AI or human collaborator stay aligned with the project’s direction and structure.
