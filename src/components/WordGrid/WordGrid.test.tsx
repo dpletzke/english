@@ -5,6 +5,7 @@ import type { CategoryDefinition } from "../../data/puzzles";
 import type { WordCard } from "../../game/types";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import WordGrid from "./WordGrid";
+import type { WordGridDragConfig } from "./WordGrid.types";
 
 const buildWordCard = (overrides: Partial<WordCard>): WordCard => ({
   id: "alpha-0",
@@ -42,7 +43,7 @@ describe("WordGrid", () => {
     );
 
     expect(
-      screen.getByRole("heading", { level: 2, name: "Solved Group" }),
+      screen.getByRole("heading", { level: 2, name: /solved group/i }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("button")).toHaveLength(sampleWords.length);
   });
@@ -79,5 +80,38 @@ describe("WordGrid", () => {
     screen.getAllByRole("button").forEach((button) => {
       expect(button).toBeDisabled();
     });
+  });
+
+  it("marks the dragging tile when drag configuration is provided", () => {
+    const dragConfig: WordGridDragConfig = {
+      draggingWordId: "alpha-0",
+      dragTargetWordId: null,
+      isDragLocked: false,
+      onWordDragStart: vi.fn(),
+      onWordDragMove: vi.fn(),
+      onWordDragEnd: vi.fn(),
+      pendingDragSettle: null,
+      clearPendingDragSettle: vi.fn(),
+      layoutLockedWordId: null,
+      clearLayoutLockedWord: vi.fn(),
+      onSettleDeltaConsumed: vi.fn(),
+    };
+
+    renderWithProviders(
+      <WordGrid
+        words={sampleWords}
+        selectedWordIds={[]}
+        onToggleWord={vi.fn()}
+        solvedCategories={[]}
+        dragConfig={dragConfig}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Alpha" }),
+    ).toHaveAttribute("data-dragging", "true");
+    expect(
+      screen.getByRole("button", { name: "Beta" }),
+    ).not.toHaveAttribute("data-dragging");
   });
 });
