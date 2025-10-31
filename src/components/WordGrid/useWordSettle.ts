@@ -6,9 +6,10 @@ import type {
 } from "./WordGrid.types";
 
 interface UseWordSettleResult {
-  activeSettleDelta: DragSettleDelta | null;
   reportDragSettle: (snapshot: DragSettleSnapshot | null) => void;
   consumeSettleDelta: (requestId: number) => void;
+  isCardLayoutLocked: (cardId: string) => boolean;
+  settleDeltaFor: (cardId: string) => DragSettleDelta | null;
 }
 
 export const useWordSettle = (
@@ -101,9 +102,42 @@ export const useWordSettle = (
     pendingDragSnapshot,
   ]);
 
+  const isCardLayoutLocked = useCallback(
+    (cardId: string) => {
+      if (!dragConfig) {
+        return false;
+      }
+      if (dragConfig.layoutLockedWordId === cardId) {
+        return true;
+      }
+      if (
+        dragConfig.pendingDragSettle &&
+        dragConfig.pendingDragSettle.fromWordId === cardId
+      ) {
+        return true;
+      }
+      if (activeSettleDelta && activeSettleDelta.wordId === cardId) {
+        return true;
+      }
+      return false;
+    },
+    [activeSettleDelta, dragConfig],
+  );
+
+  const settleDeltaFor = useCallback(
+    (cardId: string) => {
+      if (!dragConfig || !activeSettleDelta) {
+        return null;
+      }
+      return activeSettleDelta.wordId === cardId ? activeSettleDelta : null;
+    },
+    [activeSettleDelta, dragConfig],
+  );
+
   return {
-    activeSettleDelta: dragConfig ? activeSettleDelta : null,
     reportDragSettle,
     consumeSettleDelta,
+    isCardLayoutLocked,
+    settleDeltaFor,
   };
 };

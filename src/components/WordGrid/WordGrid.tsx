@@ -54,38 +54,18 @@ const WordGrid = ({
   const isDragLocked = dragConfig?.isDragLocked ?? false;
   const feedbackMap = wordFeedback ?? {};
   const dragEnabled = Boolean(dragConfig);
-  const { activeSettleDelta, reportDragSettle, consumeSettleDelta } =
-    useWordSettle(dragConfig);
+  const {
+    reportDragSettle,
+    consumeSettleDelta,
+    isCardLayoutLocked,
+    settleDeltaFor,
+  } = useWordSettle(dragConfig);
 
   const handleReorder = (order: unknown[]) => {
     if (onReorderWords) {
       onReorderWords(order as WordCard[]);
     }
   };
-
-  const isLayoutLocked = (cardId: string) => {
-    if (!dragConfig) {
-      return false;
-    }
-    if (dragConfig.layoutLockedWordId === cardId) {
-      return true;
-    }
-    if (
-      dragConfig.pendingDragSettle &&
-      dragConfig.pendingDragSettle.fromWordId === cardId
-    ) {
-      return true;
-    }
-    if (activeSettleDelta && activeSettleDelta.wordId === cardId) {
-      return true;
-    }
-    return false;
-  };
-
-  const settleDeltaForCard = (cardId: string) =>
-    activeSettleDelta && activeSettleDelta.wordId === cardId
-      ? activeSettleDelta
-      : null;
 
   return (
     <Grid>
@@ -124,8 +104,8 @@ const WordGrid = ({
               onWordDragMove={dragConfig?.onWordDragMove}
               onWordDragEnd={dragConfig?.onWordDragEnd}
               reportDragSettle={reportDragSettle}
-              settleDelta={settleDeltaForCard(card.id)}
-              isLayoutLocked={isLayoutLocked(card.id)}
+              settleDelta={settleDeltaFor(card.id)}
+              isLayoutLocked={isCardLayoutLocked(card.id)}
               onSettleDeltaConsumed={consumeSettleDelta}
             />
           );
