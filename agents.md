@@ -33,6 +33,7 @@ src/
   data/puzzles.ts        // Puzzle data loading + helpers
   game/                  // Pure logic helpers (constants, utils, types)
   hooks/useConnectionsGame.ts // Central game state hook
+  hooks/wordGrid/        // Drag + reorder hooks shared across WordGrid UI
   components/            // Presentational and layout components
   styles/GlobalStyle.ts  // Global CSS reset + theme primitives
 public/                  // Static assets
@@ -43,6 +44,7 @@ public/                  // Static assets
 - `src/data/puzzles.ts`: Loads JSON puzzle definitions; formats date labels; exposes palette data.
 - `src/game/utils.ts`: Pure helpers to normalize categories, order groups by difficulty, shuffle cards, and build `WordCard` entries.
 - `src/hooks/useConnectionsGame.ts`: Encapsulates all runtime state. Any new game mechanic should route through this hook to keep the UI declarative.
+- `src/hooks/wordGrid/`: Shared drag-and-drop hooks (`useWordSettle`, `useTileDrag`) exported via a barrel for the WordGrid UI.
 - `src/components/index.ts`: Barrel export for UI building blocks; keep it in sync when adding new components.
 
 ## Coding Principles
@@ -81,27 +83,6 @@ public/                  // Static assets
 
 ## Pending Refactors
 
-### Bundle WordGrid Drag Configuration
-
-1. **Introduce Types**
-   - Define a `WordGridDragConfig` interface that groups drag state (`draggingWordId`, `dragTargetWordId`, `isDragLocked`), handlers (start/move/end), settle lifecycle (`pendingDragSettle`, `clearPendingDragSettle`, `onSettleDeltaConsumed`), and layout lock data.
-   - Update `WordGridProps` to accept an optional `dragConfig?: WordGridDragConfig` instead of individual optional fields.
-
-2. **Update Hooks**
-   - Change `useWordSettle` to accept the full `WordGridDragConfig` or `null`, returning no-op handlers when drag is disabled.
-   - Expose helpers (`reportDragSettle`, `consumeSettleDelta`, optional `isLayoutLocked`) so `WordGrid` stays declarative.
-
-3. **Refactor WordGrid**
-   - Derive `dragEnabled` from `dragConfig` and remove local `noop*` functions.
-   - Pass drag props to `WordTile` only when `dragConfig` exists; otherwise rely on tap-only behavior.
-   - Centralize layout-lock derivation using data from the hook/bundle to avoid duplicated conditionals.
-
-4. **Consumers & Tests**
-   - Update `App.tsx` to assemble a `dragConfig` object before rendering `WordGrid`.
-   - Adjust `WordGrid.test.tsx` to cover both baseline (no drag) and drag-enabled scenarios.
-
-5. **Verification**
-   - Run `npm run build` for type checks.
-   - Execute relevant tests to ensure drag interactions and settle animations remain intact.
+- Monitor drag UX after the hook relocation. Any new motion or drag helpers should live alongside `useWordSettle` in `src/hooks/wordGrid/` so components stay presentation-only.
 
 Keeping this document current lets any AI or human collaborator stay aligned with the project’s direction and structure.
