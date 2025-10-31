@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AnimatePresence, Reorder, type Transition } from "framer-motion";
+import { AnimatePresence, Reorder } from "framer-motion";
 import styled from "styled-components";
 import type { CategoryDefinition } from "../../data/puzzles";
 import type {
@@ -8,7 +8,8 @@ import type {
   WordCardFeedbackStatus,
 } from "../../game/types";
 import { SolvedCategoryTile } from "./SolvedCategoryTile";
-import { WordTile, type CardFeedbackAnimation } from "./WordTile";
+import { WordTile } from "./WordTile";
+import { CARD_FEEDBACK_ANIMATIONS } from "./animations";
 import type {
   DragSettleDelta,
   DragSettleRequest,
@@ -80,39 +81,6 @@ const noopClearLayoutLock = () => {
   /* no-op */
 };
 
-const hopKeyframes: number[] = [0, -18, 0];
-const hopTransition: Transition = {
-  duration: 0.24,
-  ease: [0.33, 1, 0.68, 1],
-  times: [0, 0.5, 1],
-};
-
-const idleTransition: Transition = { duration: 0.18 };
-
-const shakeKeyframes: number[] = [0, -21, 21, -14, 14, -7, 7, 0];
-const shakeTransition: Transition = {
-  duration: 0.22,
-  ease: "easeInOut",
-  times: [0, 0.18, 0.36, 0.54, 0.72, 0.86, 0.93, 1],
-};
-
-const cardFeedbackAnimations: Record<
-  WordCardFeedbackStatus,
-  CardFeedbackAnimation
-> = {
-  idle: {
-    animate: { x: 0, y: 0, scale: 1 },
-    transition: idleTransition,
-  },
-  hop: {
-    animate: { x: 0, y: hopKeyframes, scale: 1 },
-    transition: hopTransition,
-  },
-  shake: {
-    animate: { x: shakeKeyframes, y: 0, scale: 1 },
-    transition: shakeTransition,
-  },
-};
 const WordGrid = ({
   words,
   selectedWordIds,
@@ -224,7 +192,7 @@ const WordGrid = ({
         {words.map((card) => {
           const feedbackStatus: WordCardFeedbackStatus =
             feedbackMap[card.id] ?? "idle";
-          const animation = cardFeedbackAnimations[feedbackStatus];
+          const animation = CARD_FEEDBACK_ANIMATIONS[feedbackStatus];
           const layoutLocked = Boolean(
             (layoutLockedWordId && layoutLockedWordId === card.id) ||
               (pendingDragSettle && pendingDragSettle.fromWordId === card.id) ||
