@@ -3,7 +3,7 @@ import type {
   DragSettleDelta,
   DragSettleSnapshot,
   WordGridDragConfig,
-} from "./WordGrid.types";
+} from "../../game/dragTypes";
 
 interface UseWordSettleResult {
   reportDragSettle: (snapshot: DragSettleSnapshot | null) => void;

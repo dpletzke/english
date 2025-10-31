@@ -10,7 +10,7 @@ import type { WordCard } from "../../game/types";
 import type { DragSettleDelta, DragSettleSnapshot } from "./WordGrid.types";
 import { WordButton } from "./WordButton";
 import type { CardFeedbackAnimation } from "./animations";
-import { useTileDrag } from "./useTileDrag";
+import { useTileDrag } from "../../hooks/wordGrid";
 
 const getLengthCategory = (label: string): "short" | "medium" | "long" => {
   const condensedLength = label.replace(/\s+/g, "").length;

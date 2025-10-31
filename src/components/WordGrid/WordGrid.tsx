@@ -6,11 +6,11 @@ import type {
   WordCardFeedbackMap,
   WordCardFeedbackStatus,
 } from "../../game/types";
+import { useWordSettle } from "../../hooks/wordGrid";
 import { SolvedCategoryTile } from "./SolvedCategoryTile";
 import { WordTile } from "./WordTile";
 import { CARD_FEEDBACK_ANIMATIONS } from "./animations";
 import type { WordGridDragConfig } from "./WordGrid.types";
-import { useWordSettle } from "./useWordSettle";
 
 interface WordGridProps {
   words: WordCard[];

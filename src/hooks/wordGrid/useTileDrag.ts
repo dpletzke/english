@@ -6,7 +6,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { type PanInfo, useDragControls } from "framer-motion";
-import type { DragSettleSnapshot } from "./WordGrid.types";
+import type { DragSettleSnapshot } from "../../game/dragTypes";
 
 const LONG_PRESS_DELAY_MS = 200;
 const POINTER_DRAG_THRESHOLD_PX = 6;
