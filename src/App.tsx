@@ -16,7 +16,6 @@ import {
   WordGrid,
   WordSection,
 } from "./components";
-import type { WordGridDragConfig } from "./components/WordGrid/WordGrid.types";
 
 declare global {
   interface Window {
@@ -37,20 +36,12 @@ const App = () => {
     mistakesAllowed,
     mistakesRemaining,
     selectedWordIds,
-    draggingWordId,
-    dragTargetWordId,
-    isDragLocked,
-    pendingDragSettle,
-    clearPendingDragSettle,
-    layoutLockedWordId,
-    clearLayoutLockedWord,
+    dragConfig,
+    isInteractionLocked,
     shuffleWords,
     onToggleWord,
     clearSelection,
     submitSelection,
-    onWordDragStart,
-    onWordDragMove,
-    onWordDragEnd,
   } = useConnectionsGame(puzzle);
 
   const [isResultOpen, setIsResultOpen] = useState(false);
@@ -86,19 +77,6 @@ const App = () => {
     setIsResultOpen(false);
   };
 
-  const dragConfig: WordGridDragConfig = {
-    draggingWordId,
-    dragTargetWordId,
-    isDragLocked,
-    onWordDragStart,
-    onWordDragMove,
-    onWordDragEnd,
-    pendingDragSettle,
-    clearPendingDragSettle,
-    layoutLockedWordId,
-    clearLayoutLockedWord,
-  };
-
   return (
     <>
       <GlobalStyle />
@@ -131,9 +109,9 @@ const App = () => {
               onSubmit={submitSelection}
               onShuffle={shuffleWords}
               onClear={clearSelection}
-              canSubmit={isPlaying && selectedWordIds.length === 4}
-              canShuffle={isPlaying}
-              canClear={isPlaying && selectedWordIds.length > 0}
+              canSubmit={!isInteractionLocked && selectedWordIds.length === 4}
+              canShuffle={!isInteractionLocked}
+              canClear={!isInteractionLocked && selectedWordIds.length > 0}
             />
           </WordSection>
         ) : null}

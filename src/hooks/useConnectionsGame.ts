@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CategoryDefinition, ConnectionsPuzzle } from "../data/puzzles";
 import type {
   GameStatus,
@@ -8,6 +8,10 @@ import type {
 } from "../game/types";
 import { DEFAULT_MISTAKES_ALLOWED } from "../game/constants";
 import { orderedCategories, prepareWordCards, shuffle } from "../game/utils";
+import type {
+  DragSettleRequest,
+  WordGridDragConfig,
+} from "../game/dragTypes";
 import { HOP_TIMING, computeRevealDelay } from "./useConnectionsGame/timing";
 import {
   clearTimeoutCollection,
@@ -22,36 +26,21 @@ interface UseConnectionsGameResult {
   orderedSolvedCategories: CategoryDefinition[];
   revealCategories: CategoryDefinition[];
   selectedWordIds: string[];
-  draggingWordId: string | null;
-  dragTargetWordId: string | null;
-  isDragLocked: boolean;
-  pendingDragSettle: DragSettleRequest | null;
-  clearPendingDragSettle: () => void;
-  layoutLockedWordId: string | null;
-  clearLayoutLockedWord: () => void;
+  dragConfig: WordGridDragConfig;
   mistakesAllowed: number;
   mistakesRemaining: number;
   status: GameStatus;
+  isInteractionLocked: boolean;
   onToggleWord: (wordId: string) => void;
   reorderWords: (nextOrder: WordCard[]) => void;
-  swapWordCards: (fromWordId: string, toWordId: string) => void;
   shuffleWords: () => void;
   clearSelection: () => void;
   submitSelection: () => void;
-  onWordDragStart: (wordId: string) => void;
-  onWordDragMove: (targetWordId: string | null) => void;
-  onWordDragEnd: () => void;
 }
 
 interface PendingSolve {
   categoryId: string;
   wordIds: string[];
-}
-
-interface DragSettleRequest {
-  fromWordId: string;
-  toWordId: string;
-  requestId: number;
 }
 
 type LayoutLockContext = {
@@ -162,6 +151,9 @@ export const useConnectionsGame = (
     () => (status === "lost" ? orderedUnsolvedCategories : []),
     [status, orderedUnsolvedCategories],
   );
+
+  const isInteractionLocked =
+    status !== "playing" || isMistakeAnimating || isDragLocked;
 
   const onToggleWord = (wordId: string) => {
     if (status !== "playing" || isMistakeAnimating || isDragLocked) {
@@ -412,12 +404,25 @@ export const useConnectionsGame = (
     setIsDragLocked(false);
   };
 
-  const clearPendingDragSettle = () => {
+  const clearPendingDragSettle = useCallback(() => {
     setPendingDragSettle(null);
-  };
+  }, []);
 
-  const clearLayoutLockedWord = () => {
+  const clearLayoutLockedWord = useCallback(() => {
     setLayoutLockContext(null);
+  }, []);
+
+  const dragConfig: WordGridDragConfig = {
+    draggingWordId,
+    dragTargetWordId,
+    isDragLocked,
+    onWordDragStart,
+    onWordDragMove,
+    onWordDragEnd,
+    pendingDragSettle,
+    clearPendingDragSettle,
+    layoutLockedWordId: layoutLockContext?.wordId ?? null,
+    clearLayoutLockedWord,
   };
 
   const result: UseConnectionsGameResult = {
@@ -426,25 +431,16 @@ export const useConnectionsGame = (
     orderedSolvedCategories,
     revealCategories,
     selectedWordIds,
-    draggingWordId,
-    dragTargetWordId,
-    isDragLocked,
-    pendingDragSettle,
+    dragConfig,
     mistakesAllowed,
     mistakesRemaining,
     status,
+    isInteractionLocked,
     onToggleWord,
     reorderWords,
-    swapWordCards,
     shuffleWords,
     clearSelection,
     submitSelection,
-    onWordDragStart,
-    onWordDragMove,
-    onWordDragEnd,
-    clearPendingDragSettle,
-    layoutLockedWordId: layoutLockContext?.wordId ?? null,
-    clearLayoutLockedWord,
   };
 
   return result;
