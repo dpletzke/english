@@ -9,7 +9,6 @@ interface PendingSolve {
 }
 
 export interface GameState {
-  puzzleId: string;
   availableWords: WordCard[];
   selectedIds: Set<string>;
   solvedCategoryIds: string[];
@@ -63,7 +62,6 @@ type GameAction =
   | ClearSelectionAction;
 
 export const buildInitialState = (puzzle: ConnectionsPuzzle): GameState => ({
-  puzzleId: puzzle.date,
   availableWords: prepareWordCards(puzzle),
   selectedIds: new Set(),
   solvedCategoryIds: [],
