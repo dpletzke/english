@@ -72,6 +72,7 @@ const applyPaletteStyles = ($selected: boolean, $isDragging?: boolean) => {
     ${!$isDragging &&
     css`
       &:not(:disabled):hover {
+        cursor: pointer;
         box-shadow: ${palette.hoverShadow};
         border-color: ${palette.hoverBorder};
       }
@@ -98,7 +99,7 @@ export const WordButton = styled(motion.button)<WordButtonStyleProps>`
   font-weight: 700;
   font-size: ${({ $layout, $length }) => getButtonFontSize($layout, $length)};
   letter-spacing: ${({ $length }) => LETTER_SPACING_BY_LENGTH[$length]};
-  cursor: pointer;
+  cursor: default;
   text-transform: uppercase;
   transition:
     transform 120ms ease,

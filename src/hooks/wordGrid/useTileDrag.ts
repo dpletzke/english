@@ -99,7 +99,19 @@ export const useTileDrag = ({
     isDragLocked &&
     draggingWordId !== null &&
     draggingWordId !== cardId;
-  const buttonCursor = dragEnabled && isDragging ? "grabbing" : undefined;
+  const buttonCursor =
+    dragEnabled && draggingWordId !== null ? "grabbing" : undefined;
+
+  useEffect(() => {
+    if (!isDragging || typeof document === "undefined") {
+      return;
+    }
+    const previousCursor = document.body.style.cursor;
+    document.body.style.cursor = "grabbing";
+    return () => {
+      document.body.style.cursor = previousCursor;
+    };
+  }, [isDragging]);
 
   const reportDragMove = useCallback(
     (nextTarget: string | null) => {
