@@ -44,12 +44,14 @@ const WordItem = styled(Reorder.Item)<{
     $isDragging &&
     css`
       pointer-events: none;
+      z-index: 3;
     `}
   ${({ $isDropTarget }) =>
     $isDropTarget &&
     css`
-      outline: 2px solid var(--accent-color);
-      outline-offset: 4px;
+      outline: 3px solid rgba(227, 99, 99, 0.85);
+      outline-offset: 6px;
+      border-radius: 16px;
     `}
 `;
 
