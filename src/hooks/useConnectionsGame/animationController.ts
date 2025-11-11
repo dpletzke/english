@@ -1,10 +1,9 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type {
   WordCard,
   WordCardFeedbackMap,
   WordCardFeedbackStatus,
 } from "../../game/types";
-import type { DragSettleRequest } from "../../game/dragTypes";
 import { runHopSequence } from "./hopSequence";
 import { HOP_TIMING, computeRevealDelay } from "./timing";
 import {
@@ -13,6 +12,11 @@ import {
   scheduleManagedTimeout,
 } from "./timeouts";
 import type { PendingSolve } from "./gameReducer";
+import { useManagedWordFeedback } from "./useManagedWordFeedback";
+import {
+  type DragControllerState,
+  useDragController,
+} from "./useDragController";
 
 interface UseAnimationControllerOptions {
   availableWords: WordCard[];
@@ -41,19 +45,6 @@ interface ShuffleWordsArgs {
   selectedWordIds: string[];
 }
 
-interface DragControllerState {
-  draggingWordId: string | null;
-  dragTargetWordId: string | null;
-  isDragLockedAnim: boolean;
-  pendingDragSettle: DragSettleRequest | null;
-  layoutLockedWordId: string | null;
-  startDragAnim: (wordId: string) => void;
-  moveDragAnim: (targetWordId: string | null) => void;
-  endDragAnim: () => void;
-  clearPendingDragSettle: () => void;
-  clearLayoutLockedWord: () => void;
-}
-
 interface AnimationControllerResult {
   wordFeedback: WordCardFeedbackMap;
   setFeedbackForIds: (ids: string[], status: WordCardFeedbackStatus) => void;
@@ -69,50 +60,6 @@ interface AnimationControllerResult {
   resetAnimationState: () => void;
   cleanup: () => void;
 }
-
-const useManagedWordFeedback = () => {
-  const [wordFeedback, setWordFeedback] = useState<WordCardFeedbackMap>({});
-
-  const setFeedbackForIds = useCallback(
-    (ids: string[], status: WordCardFeedbackStatus) => {
-      if (ids.length === 0) {
-        return;
-      }
-      setWordFeedback((prev) => {
-        const next: WordCardFeedbackMap = { ...prev };
-        ids.forEach((id) => {
-          next[id] = status;
-        });
-        return next;
-      });
-    },
-    [],
-  );
-
-  const resetFeedback = useCallback(() => {
-    setWordFeedback({});
-  }, []);
-
-  const clearFeedbackForIds = useCallback((ids: string[]) => {
-    if (ids.length === 0) {
-      return;
-    }
-    setWordFeedback((prev) => {
-      const next: WordCardFeedbackMap = { ...prev };
-      ids.forEach((id) => {
-        delete next[id];
-      });
-      return next;
-    });
-  }, []);
-
-  return {
-    wordFeedback,
-    setFeedbackForIds,
-    resetFeedback,
-    clearFeedbackForIds,
-  };
-};
 
 export const useAnimationController = (
   options: UseAnimationControllerOptions,
@@ -132,12 +79,6 @@ export const useAnimationController = (
     clearFeedbackForIds,
   } = useManagedWordFeedback();
   const [isMistakeAnimating, setIsMistakeAnimating] = useState(false);
-  const [draggingWordId, setDraggingWordId] = useState<string | null>(null);
-  const [dragTargetWordId, setDragTargetWordId] = useState<string | null>(null);
-  const [pendingDragSettle, setPendingDragSettle] =
-    useState<DragSettleRequest | null>(null);
-  const [layoutLockedWordId, setLayoutLockedWordId] =
-    useState<string | null>(null);
   const revealTimeoutRef = useRef<number | null>(null);
   const solveSortTimeoutRef = useRef<number | null>(null);
   const hopTimeoutsRef = useRef<number[]>([]);
@@ -175,17 +116,40 @@ export const useAnimationController = (
   const resetAnimationState = useCallback(() => {
     clearAnimationTimers();
     setIsMistakeAnimating(false);
-    setDraggingWordId(null);
-    setDragTargetWordId(null);
-    setPendingDragSettle(null);
-    setLayoutLockedWordId(null);
+    resetDragContext();
     resetFeedback();
   }, [
     clearAnimationTimers,
+    resetDragContext,
     resetFeedback,
   ]);
 
   const cleanup = clearAnimationTimers;
+
+  const swapWordCards = useCallback(
+    (fromWordId: string, toWordId: string) => {
+      if (fromWordId === toWordId) {
+        return;
+      }
+      const fromIndex = availableWords.findIndex(
+        (card) => card.id === fromWordId,
+      );
+      const toIndex = availableWords.findIndex((card) => card.id === toWordId);
+      if (fromIndex === -1 || toIndex === -1) {
+        return;
+      }
+      const next = [...availableWords];
+      const temp = next[fromIndex];
+      next[fromIndex] = next[toIndex];
+      next[toIndex] = temp;
+      onSetWordOrder(next);
+    },
+    [availableWords, onSetWordOrder],
+  );
+
+  const { dragState, resetDragContext } = useDragController({
+    swapWordCards,
+  });
 
   const shuffleWords = useCallback(
     ({ shuffleFn, selectedWordIds }: ShuffleWordsArgs) => {
@@ -287,93 +251,6 @@ export const useAnimationController = (
       onRecordMistake();
     },
     [availableWords, onRecordMistake, setFeedbackForIds],
-  );
-
-  const swapWordCards = useCallback(
-    (fromWordId: string, toWordId: string) => {
-      if (fromWordId === toWordId) {
-        return;
-      }
-      const fromIndex = availableWords.findIndex(
-        (card) => card.id === fromWordId,
-      );
-      const toIndex = availableWords.findIndex((card) => card.id === toWordId);
-      if (fromIndex === -1 || toIndex === -1) {
-        return;
-      }
-      const next = [...availableWords];
-      const temp = next[fromIndex];
-      next[fromIndex] = next[toIndex];
-      next[toIndex] = temp;
-      onSetWordOrder(next);
-    },
-    [availableWords, onSetWordOrder],
-  );
-
-  const startDragAnim = useCallback((wordId: string) => {
-    setDraggingWordId(wordId);
-    setDragTargetWordId(null);
-  }, []);
-
-  const moveDragAnim = useCallback(
-    (targetWordId: string | null) => {
-      if (!draggingWordId) {
-        return;
-      }
-      if (!targetWordId || draggingWordId === targetWordId) {
-        setDragTargetWordId(null);
-        setLayoutLockedWordId(null);
-        return;
-      }
-      setLayoutLockedWordId((prev) => {
-        if (prev === draggingWordId) {
-          return prev;
-        }
-        return draggingWordId;
-      });
-      setDragTargetWordId(targetWordId);
-    },
-    [draggingWordId],
-  );
-
-  const endDragAnim = useCallback(() => {
-    if (draggingWordId && dragTargetWordId) {
-      const settleRequest: DragSettleRequest = {
-        fromWordId: draggingWordId,
-        toWordId: dragTargetWordId,
-      };
-      setLayoutLockedWordId(draggingWordId);
-      setPendingDragSettle(settleRequest);
-      swapWordCards(draggingWordId, dragTargetWordId);
-    }
-    setDraggingWordId(null);
-    setDragTargetWordId(null);
-  }, [dragTargetWordId, draggingWordId, swapWordCards]);
-
-  const dragState = useMemo<DragControllerState>(
-    () => ({
-      draggingWordId,
-      dragTargetWordId,
-      isDragLockedAnim: Boolean(
-        draggingWordId || layoutLockedWordId || pendingDragSettle,
-      ),
-      pendingDragSettle,
-      layoutLockedWordId,
-      startDragAnim,
-      moveDragAnim,
-      endDragAnim,
-      clearPendingDragSettle: () => setPendingDragSettle(null),
-      clearLayoutLockedWord: () => setLayoutLockedWordId(null),
-    }),
-    [
-      dragTargetWordId,
-      draggingWordId,
-      layoutLockedWordId,
-      endDragAnim,
-      moveDragAnim,
-      startDragAnim,
-      pendingDragSettle,
-    ],
   );
 
   return {
