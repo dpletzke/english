@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type {
   WordCard,
   WordCardFeedbackMap,
@@ -125,11 +125,6 @@ export const useAnimationController = (
     onRecordMistake,
   } = options;
 
-  const availableWordsRef = useRef<WordCard[]>(availableWords);
-  useEffect(() => {
-    availableWordsRef.current = availableWords;
-  }, [availableWords]);
-
   const {
     wordFeedback,
     setFeedbackForIds,
@@ -194,13 +189,13 @@ export const useAnimationController = (
 
   const shuffleWords = useCallback(
     ({ shuffleFn, selectedWordIds }: ShuffleWordsArgs) => {
-      const shuffled = shuffleFn(availableWordsRef.current);
+      const shuffled = shuffleFn(availableWords);
       onSetWordOrder(shuffled);
       if (selectedWordIds.length > 0) {
         setFeedbackForIds(selectedWordIds, "idle");
       }
     },
-    [onSetWordOrder, setFeedbackForIds],
+    [availableWords, onSetWordOrder, setFeedbackForIds],
   );
 
   const reorderWords = useCallback(
@@ -221,10 +216,9 @@ export const useAnimationController = (
 
   const playSolveAnimation = useCallback(
     ({ categoryId, wordIds, totalCategoryCount }: PlaySolveAnimationArgs) => {
-      const wordsSnapshot = availableWordsRef.current;
       const { settleDelayMs } = runHopSequence({
         ids: wordIds,
-        availableWords: wordsSnapshot,
+        availableWords,
         setFeedback: setFeedbackForIds,
         hopTimeoutsRef,
         settleTimeoutsRef,
@@ -234,7 +228,7 @@ export const useAnimationController = (
       onMarkSolvePending({ categoryId, wordIds });
 
       const applySolvedOrdering = () => {
-        const next = [...availableWordsRef.current];
+        const next = [...availableWords];
         next.sort((a, b) => {
           const aSolved = wordIds.includes(a.id);
           const bSolved = wordIds.includes(b.id);
@@ -267,6 +261,7 @@ export const useAnimationController = (
       }, revealDelay);
     },
     [
+      availableWords,
       clearFeedbackForIds,
       clearRevealTimeout,
       clearSettleTimeouts,
@@ -281,10 +276,9 @@ export const useAnimationController = (
   const playMistakeAnimation = useCallback(
     ({ wordIds }: PlayMistakeAnimationArgs) => {
       setIsMistakeAnimating(true);
-      const wordsSnapshot = availableWordsRef.current;
       const { settleDelayMs } = runHopSequence({
         ids: wordIds,
-        availableWords: wordsSnapshot,
+        availableWords,
         setFeedback: setFeedbackForIds,
         hopTimeoutsRef,
         settleTimeoutsRef,
@@ -301,7 +295,7 @@ export const useAnimationController = (
       );
       onRecordMistake();
     },
-    [onRecordMistake, setFeedbackForIds],
+    [availableWords, onRecordMistake, setFeedbackForIds],
   );
 
   const swapWordCards = useCallback(
@@ -309,21 +303,20 @@ export const useAnimationController = (
       if (fromWordId === toWordId) {
         return;
       }
-      const wordsSnapshot = availableWordsRef.current;
-      const fromIndex = wordsSnapshot.findIndex(
+      const fromIndex = availableWords.findIndex(
         (card) => card.id === fromWordId,
       );
-      const toIndex = wordsSnapshot.findIndex((card) => card.id === toWordId);
+      const toIndex = availableWords.findIndex((card) => card.id === toWordId);
       if (fromIndex === -1 || toIndex === -1) {
         return;
       }
-      const next = [...wordsSnapshot];
+      const next = [...availableWords];
       const temp = next[fromIndex];
       next[fromIndex] = next[toIndex];
       next[toIndex] = temp;
       onSetWordOrder(next);
     },
-    [onSetWordOrder],
+    [availableWords, onSetWordOrder],
   );
 
   const onWordDragStart = useCallback((wordId: string) => {
