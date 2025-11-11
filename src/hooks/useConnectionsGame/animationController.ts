@@ -355,7 +355,9 @@ export const useAnimationController = (
     () => ({
       draggingWordId,
       dragTargetWordId,
-      isDragLocked: Boolean(draggingWordId),
+      isDragLocked: Boolean(
+        draggingWordId || layoutLockedWordId || pendingDragSettle,
+      ),
       pendingDragSettle,
       layoutLockedWordId,
       onWordDragStart,
