@@ -57,12 +57,12 @@ interface DragControllerState {
 interface AnimationControllerResult {
   wordFeedback: WordCardFeedbackMap;
   setFeedbackForIds: (ids: string[], status: WordCardFeedbackStatus) => void;
+  clearFeedbackForIds: (ids: string[]) => void;
   resetFeedback: () => void;
   isMistakeAnimating: boolean;
   dragState: DragControllerState;
   shuffleWords: (args: ShuffleWordsArgs) => void;
   reorderWords: (nextOrder: WordCard[]) => void;
-  clearSelectionFeedback: (selectedWordIds: string[]) => void;
   playSolveAnimation: (args: PlaySolveAnimationArgs) => void;
   playMistakeAnimation: (args: PlayMistakeAnimationArgs) => void;
   swapWordCards: (fromWordId: string, toWordId: string) => void;
@@ -192,10 +192,10 @@ export const useAnimationController = (
       const shuffled = shuffleFn(availableWords);
       onSetWordOrder(shuffled);
       if (selectedWordIds.length > 0) {
-        setFeedbackForIds(selectedWordIds, "idle");
+        clearFeedbackForIds(selectedWordIds);
       }
     },
-    [availableWords, onSetWordOrder, setFeedbackForIds],
+    [availableWords, clearFeedbackForIds, onSetWordOrder],
   );
 
   const reorderWords = useCallback(
@@ -203,15 +203,6 @@ export const useAnimationController = (
       onSetWordOrder(nextOrder);
     },
     [onSetWordOrder],
-  );
-
-  const clearSelectionFeedback = useCallback(
-    (selectedWordIds: string[]) => {
-      if (selectedWordIds.length > 0) {
-        setFeedbackForIds(selectedWordIds, "idle");
-      }
-    },
-    [setFeedbackForIds],
   );
 
   const playSolveAnimation = useCallback(
@@ -288,7 +279,7 @@ export const useAnimationController = (
       scheduleManagedTimeout(
         settleTimeoutsRef,
         () => {
-          setFeedbackForIds(wordIds, "idle");
+          clearFeedbackForIds(wordIds);
           setIsMistakeAnimating(false);
         },
         settleDelayMs + HOP_TIMING.shakeDurationMs,
@@ -387,12 +378,12 @@ export const useAnimationController = (
   return {
     wordFeedback,
     setFeedbackForIds,
+    clearFeedbackForIds,
     resetFeedback,
     isMistakeAnimating,
     dragState,
     shuffleWords,
     reorderWords,
-    clearSelectionFeedback,
     playSolveAnimation,
     playMistakeAnimation,
     swapWordCards,

@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer } from "react";
 import type { CategoryDefinition, ConnectionsPuzzle } from "../data/puzzles";
-import type {
-  GameStatus,
-  WordCard,
-  WordCardFeedbackMap,
-} from "../game/types";
+import type { GameStatus, WordCard, WordCardFeedbackMap } from "../game/types";
 import { DEFAULT_MISTAKES_ALLOWED } from "../game/constants";
 import { orderedCategories, shuffle } from "../game/utils";
 import type { WordGridDragConfig } from "../game/dragTypes";
@@ -50,17 +46,13 @@ export const useConnectionsGame = (
     status,
     pendingSolve,
   } = gameState;
-  const selectedWordIds = useMemo(
-    () => Array.from(selectedIds),
-    [selectedIds],
-  );
+  const selectedWordIds = useMemo(() => Array.from(selectedIds), [selectedIds]);
   const setWordOrder = useCallback(
     (words: WordCard[]) => dispatch({ type: "setWordOrder", words }),
     [dispatch],
   );
   const markSolvePending = useCallback(
-    (payload: PendingSolve) =>
-      dispatch({ type: "markSolvePending", payload }),
+    (payload: PendingSolve) => dispatch({ type: "markSolvePending", payload }),
     [dispatch],
   );
   const completeSolve = useCallback(
@@ -88,14 +80,13 @@ export const useConnectionsGame = (
 
   const {
     wordFeedback,
-    setFeedbackForIds,
+    clearFeedbackForIds,
     resetAnimationState,
     cleanup: cleanupAnimations,
     isMistakeAnimating,
     dragState,
     shuffleWords: shuffleWithAnimation,
     reorderWords: reorderWithAnimation,
-    clearSelectionFeedback,
     playSolveAnimation,
     playMistakeAnimation,
   } = useAnimationController({
@@ -181,7 +172,7 @@ export const useConnectionsGame = (
       return;
     }
 
-    setFeedbackForIds([wordId], "idle");
+    clearFeedbackForIds([wordId]);
     dispatch({ type: "toggleWord", wordId });
   };
 
@@ -207,7 +198,7 @@ export const useConnectionsGame = (
       return;
     }
 
-    clearSelectionFeedback(selectedWordIds);
+    clearFeedbackForIds(selectedWordIds);
     dispatch({ type: "clearSelection" });
   };
 
