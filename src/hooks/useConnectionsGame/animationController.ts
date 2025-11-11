@@ -341,7 +341,6 @@ export const useAnimationController = (
       const settleRequest: DragSettleRequest = {
         fromWordId: draggingWordId,
         toWordId: dragTargetWordId,
-        requestId: Date.now(),
       };
       setLayoutLockedWordId(draggingWordId);
       setPendingDragSettle(settleRequest);

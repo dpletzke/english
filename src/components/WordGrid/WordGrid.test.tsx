@@ -94,7 +94,6 @@ describe("WordGrid", () => {
       clearPendingDragSettle: vi.fn(),
       layoutLockedWordId: null,
       clearLayoutLockedWord: vi.fn(),
-      onSettleDeltaConsumed: vi.fn(),
     };
 
     renderWithProviders(

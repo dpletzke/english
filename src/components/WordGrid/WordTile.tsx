@@ -74,7 +74,7 @@ interface WordTileProps {
   onWordDragEnd?: () => void;
   reportDragSettle: (snapshot: DragSettleSnapshot | null) => void;
   settleDelta: DragSettleDelta | null;
-  onSettleDeltaConsumed: (requestId: number) => void;
+  onSettleDeltaConsumed: () => void;
   isLayoutLocked: boolean;
 }
 
@@ -123,7 +123,6 @@ export const WordTile = ({
 
   const settleX = useMotionValue(0);
   const settleY = useMotionValue(0);
-  const lastAnimatedRequestIdRef = useRef<number | null>(null);
   const activeAnimationXRef = useRef<ReturnType<typeof animate> | null>(null);
   const activeAnimationYRef = useRef<ReturnType<typeof animate> | null>(null);
 
@@ -131,17 +130,13 @@ export const WordTile = ({
     if (!settleDelta || settleDelta.wordId !== card.id) {
       return;
     }
-    if (
-      lastAnimatedRequestIdRef.current === settleDelta.requestId ||
-      isDragging
-    ) {
+    if (isDragging) {
       return;
     }
     activeAnimationXRef.current?.stop();
     activeAnimationYRef.current?.stop();
     activeAnimationXRef.current = null;
     activeAnimationYRef.current = null;
-    lastAnimatedRequestIdRef.current = settleDelta.requestId;
     settleX.set(settleDelta.deltaX);
     settleY.set(settleDelta.deltaY);
     const animationX = animate(settleX, 0, {
@@ -159,7 +154,7 @@ export const WordTile = ({
     animationY.then(() => {
       activeAnimationXRef.current = null;
       activeAnimationYRef.current = null;
-      onSettleDeltaConsumed(settleDelta.requestId);
+      onSettleDeltaConsumed();
     });
   }, [
     card.id,

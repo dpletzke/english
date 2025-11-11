@@ -1,7 +1,6 @@
 export type DragSettleRequest = {
   fromWordId: string;
   toWordId: string;
-  requestId: number;
 };
 
 export type DragSettleSnapshot = {
@@ -16,7 +15,6 @@ export type DragSettleDelta = {
   wordId: string;
   deltaX: number;
   deltaY: number;
-  requestId: number;
   recordedAt: number;
 };
 
@@ -29,7 +27,6 @@ export interface WordGridDragConfig {
   onWordDragEnd: () => void;
   pendingDragSettle: DragSettleRequest | null;
   clearPendingDragSettle: () => void;
-  onSettleDeltaConsumed?: (requestId: number) => void;
   layoutLockedWordId: string | null;
   clearLayoutLockedWord: () => void;
 }

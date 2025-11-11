@@ -7,7 +7,7 @@ import type {
 
 interface UseWordSettleResult {
   reportDragSettle: (snapshot: DragSettleSnapshot | null) => void;
-  consumeSettleDelta: (requestId: number) => void;
+  consumeSettleDelta: () => void;
   isCardLayoutLocked: (cardId: string) => boolean;
   settleDeltaFor: (cardId: string) => DragSettleDelta | null;
 }
@@ -23,7 +23,6 @@ export const useWordSettle = (
   const pendingDragSettle = dragConfig?.pendingDragSettle ?? null;
   const clearPendingDragSettle = dragConfig?.clearPendingDragSettle;
   const clearLayoutLockedWord = dragConfig?.clearLayoutLockedWord;
-  const onSettleDeltaConsumed = dragConfig?.onSettleDeltaConsumed;
 
   const reportDragSettle = useCallback(
     (snapshot: DragSettleSnapshot | null) => {
@@ -42,19 +41,15 @@ export const useWordSettle = (
     [clearLayoutLockedWord, clearPendingDragSettle],
   );
 
-  const consumeSettleDelta = useCallback(
-    (requestId: number) => {
-      if (!clearLayoutLockedWord) {
-        return;
-      }
-      if (activeSettleDelta && activeSettleDelta.requestId === requestId) {
-        setActiveSettleDelta(null);
-      }
-      onSettleDeltaConsumed?.(requestId);
-      clearLayoutLockedWord();
-    },
-    [activeSettleDelta, clearLayoutLockedWord, onSettleDeltaConsumed],
-  );
+  const consumeSettleDelta = useCallback(() => {
+    if (!clearLayoutLockedWord) {
+      return;
+    }
+    if (activeSettleDelta) {
+      setActiveSettleDelta(null);
+    }
+    clearLayoutLockedWord();
+  }, [activeSettleDelta, clearLayoutLockedWord]);
 
   useEffect(() => {
     if (!dragConfig) {
@@ -90,7 +85,6 @@ export const useWordSettle = (
       wordId: pendingDragSnapshot.fromWordId,
       deltaX,
       deltaY,
-      requestId: pendingDragSettle.requestId,
       recordedAt: now,
     };
     setActiveSettleDelta(settleDelta);
