@@ -171,11 +171,20 @@ export const useAnimationController = (
     [],
   );
 
-  const resetAnimationState = useCallback(() => {
+  const clearAnimationTimers = useCallback(() => {
     clearRevealTimeout();
     clearSolveSortTimeout();
     clearHopTimeouts();
     clearSettleTimeouts();
+  }, [
+    clearHopTimeouts,
+    clearRevealTimeout,
+    clearSettleTimeouts,
+    clearSolveSortTimeout,
+  ]);
+
+  const resetAnimationState = useCallback(() => {
+    clearAnimationTimers();
     setIsMistakeAnimating(false);
     setDraggingWordId(null);
     setDragTargetWordId(null);
@@ -184,24 +193,11 @@ export const useAnimationController = (
     setLayoutLockContext(null);
     resetFeedback();
   }, [
-    clearHopTimeouts,
-    clearRevealTimeout,
-    clearSettleTimeouts,
-    clearSolveSortTimeout,
+    clearAnimationTimers,
     resetFeedback,
   ]);
 
-  const cleanup = useCallback(() => {
-    clearRevealTimeout();
-    clearSolveSortTimeout();
-    clearHopTimeouts();
-    clearSettleTimeouts();
-  }, [
-    clearHopTimeouts,
-    clearRevealTimeout,
-    clearSettleTimeouts,
-    clearSolveSortTimeout,
-  ]);
+  const cleanup = clearAnimationTimers;
 
   const shuffleWords = useCallback(
     ({ shuffleFn, selectedWordIds }: ShuffleWordsArgs) => {
