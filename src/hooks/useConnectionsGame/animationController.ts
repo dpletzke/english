@@ -139,7 +139,6 @@ export const useAnimationController = (
   const [isMistakeAnimating, setIsMistakeAnimating] = useState(false);
   const [draggingWordId, setDraggingWordId] = useState<string | null>(null);
   const [dragTargetWordId, setDragTargetWordId] = useState<string | null>(null);
-  const [isDragLocked, setIsDragLocked] = useState(false);
   const [pendingDragSettle, setPendingDragSettle] =
     useState<DragSettleRequest | null>(null);
   const [layoutLockedWordId, setLayoutLockedWordId] =
@@ -183,7 +182,6 @@ export const useAnimationController = (
     setIsMistakeAnimating(false);
     setDraggingWordId(null);
     setDragTargetWordId(null);
-    setIsDragLocked(false);
     setPendingDragSettle(null);
     setLayoutLockedWordId(null);
     resetFeedback();
@@ -331,7 +329,6 @@ export const useAnimationController = (
   const onWordDragStart = useCallback((wordId: string) => {
     setDraggingWordId(wordId);
     setDragTargetWordId(null);
-    setIsDragLocked(true);
   }, []);
 
   const onWordDragMove = useCallback(
@@ -368,14 +365,13 @@ export const useAnimationController = (
     }
     setDraggingWordId(null);
     setDragTargetWordId(null);
-    setIsDragLocked(false);
   }, [dragTargetWordId, draggingWordId, swapWordCards]);
 
   const dragState = useMemo<DragControllerState>(
     () => ({
       draggingWordId,
       dragTargetWordId,
-      isDragLocked,
+      isDragLocked: Boolean(draggingWordId),
       pendingDragSettle,
       layoutLockedWordId,
       onWordDragStart,
@@ -387,7 +383,6 @@ export const useAnimationController = (
     [
       dragTargetWordId,
       draggingWordId,
-      isDragLocked,
       layoutLockedWordId,
       onWordDragEnd,
       onWordDragMove,
