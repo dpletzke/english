@@ -14,11 +14,6 @@ import {
 } from "./timeouts";
 import type { PendingSolve } from "./gameReducer";
 
-interface LayoutLockContext {
-  wordId: string;
-  requestId: number;
-}
-
 interface UseAnimationControllerOptions {
   availableWords: WordCard[];
   onSetWordOrder: (words: WordCard[]) => void;
@@ -147,8 +142,8 @@ export const useAnimationController = (
   const [isDragLocked, setIsDragLocked] = useState(false);
   const [pendingDragSettle, setPendingDragSettle] =
     useState<DragSettleRequest | null>(null);
-  const [layoutLockContext, setLayoutLockContext] =
-    useState<LayoutLockContext | null>(null);
+  const [layoutLockedWordId, setLayoutLockedWordId] =
+    useState<string | null>(null);
   const revealTimeoutRef = useRef<number | null>(null);
   const solveSortTimeoutRef = useRef<number | null>(null);
   const hopTimeoutsRef = useRef<number[]>([]);
@@ -190,7 +185,7 @@ export const useAnimationController = (
     setDragTargetWordId(null);
     setIsDragLocked(false);
     setPendingDragSettle(null);
-    setLayoutLockContext(null);
+    setLayoutLockedWordId(null);
     resetFeedback();
   }, [
     clearAnimationTimers,
@@ -346,17 +341,14 @@ export const useAnimationController = (
       }
       if (!targetWordId || draggingWordId === targetWordId) {
         setDragTargetWordId(null);
-        setLayoutLockContext(null);
+        setLayoutLockedWordId(null);
         return;
       }
-      setLayoutLockContext((prev) => {
-        if (prev && prev.wordId === draggingWordId) {
+      setLayoutLockedWordId((prev) => {
+        if (prev === draggingWordId) {
           return prev;
         }
-        return {
-          wordId: draggingWordId,
-          requestId: Date.now(),
-        };
+        return draggingWordId;
       });
       setDragTargetWordId(targetWordId);
     },
@@ -370,10 +362,7 @@ export const useAnimationController = (
         toWordId: dragTargetWordId,
         requestId: Date.now(),
       };
-      setLayoutLockContext({
-        wordId: draggingWordId,
-        requestId: settleRequest.requestId,
-      });
+      setLayoutLockedWordId(draggingWordId);
       setPendingDragSettle(settleRequest);
       swapWordCards(draggingWordId, dragTargetWordId);
     }
@@ -388,18 +377,18 @@ export const useAnimationController = (
       dragTargetWordId,
       isDragLocked,
       pendingDragSettle,
-      layoutLockedWordId: layoutLockContext?.wordId ?? null,
+      layoutLockedWordId,
       onWordDragStart,
       onWordDragMove,
       onWordDragEnd,
       clearPendingDragSettle: () => setPendingDragSettle(null),
-      clearLayoutLockedWord: () => setLayoutLockContext(null),
+      clearLayoutLockedWord: () => setLayoutLockedWordId(null),
     }),
     [
       dragTargetWordId,
       draggingWordId,
       isDragLocked,
-      layoutLockContext,
+      layoutLockedWordId,
       onWordDragEnd,
       onWordDragMove,
       onWordDragStart,
