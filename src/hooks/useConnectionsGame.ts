@@ -99,12 +99,12 @@ export const useConnectionsGame = (
   const {
     draggingWordId,
     dragTargetWordId,
-    isDragLocked: isDragLockedInternal,
+    isDragLockedAnim,
     pendingDragSettle,
     layoutLockedWordId,
-    onWordDragStart: internalDragStart,
-    onWordDragMove: internalDragMove,
-    onWordDragEnd: internalDragEnd,
+    startDragAnim,
+    moveDragAnim,
+    endDragAnim,
     clearPendingDragSettle,
     clearLayoutLockedWord,
   } = dragState;
@@ -154,7 +154,7 @@ export const useConnectionsGame = (
       if (status !== "playing" || isMistakeAnimating) {
         return true;
       }
-      if (!options?.ignoreDragLock && isDragLockedInternal) {
+      if (!options?.ignoreDragLock && isDragLockedAnim) {
         return true;
       }
       if (options?.requireSolveIdle && pendingSolve) {
@@ -162,7 +162,7 @@ export const useConnectionsGame = (
       }
       return false;
     },
-    [status, isMistakeAnimating, isDragLockedInternal, pendingSolve],
+    [status, isMistakeAnimating, isDragLockedAnim, pendingSolve],
   );
 
   const isInteractionLocked = isActionLocked();
@@ -251,22 +251,22 @@ export const useConnectionsGame = (
     if (isActionLocked({ requireSolveIdle: true })) {
       return;
     }
-    internalDragStart(wordId);
+    startDragAnim(wordId);
   };
 
   const onWordDragMove = (targetWordId: string | null) => {
-    internalDragMove(targetWordId);
+    moveDragAnim(targetWordId);
   };
 
   const onWordDragEnd = () => {
-    internalDragEnd();
+    endDragAnim();
   };
 
   const dragConfig: WordGridDragConfig = useMemo(
     () => ({
       draggingWordId,
       dragTargetWordId,
-      isDragLocked: isDragLockedInternal,
+      isDragLocked: isDragLockedAnim,
       onWordDragStart,
       onWordDragMove,
       onWordDragEnd,
@@ -280,7 +280,7 @@ export const useConnectionsGame = (
       clearPendingDragSettle,
       dragTargetWordId,
       draggingWordId,
-      isDragLockedInternal,
+      isDragLockedAnim,
       layoutLockedWordId,
       onWordDragEnd,
       onWordDragMove,

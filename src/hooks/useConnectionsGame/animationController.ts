@@ -44,12 +44,12 @@ interface ShuffleWordsArgs {
 interface DragControllerState {
   draggingWordId: string | null;
   dragTargetWordId: string | null;
-  isDragLocked: boolean;
+  isDragLockedAnim: boolean;
   pendingDragSettle: DragSettleRequest | null;
   layoutLockedWordId: string | null;
-  onWordDragStart: (wordId: string) => void;
-  onWordDragMove: (targetWordId: string | null) => void;
-  onWordDragEnd: () => void;
+  startDragAnim: (wordId: string) => void;
+  moveDragAnim: (targetWordId: string | null) => void;
+  endDragAnim: () => void;
   clearPendingDragSettle: () => void;
   clearLayoutLockedWord: () => void;
 }
@@ -310,12 +310,12 @@ export const useAnimationController = (
     [availableWords, onSetWordOrder],
   );
 
-  const onWordDragStart = useCallback((wordId: string) => {
+  const startDragAnim = useCallback((wordId: string) => {
     setDraggingWordId(wordId);
     setDragTargetWordId(null);
   }, []);
 
-  const onWordDragMove = useCallback(
+  const moveDragAnim = useCallback(
     (targetWordId: string | null) => {
       if (!draggingWordId) {
         return;
@@ -336,7 +336,7 @@ export const useAnimationController = (
     [draggingWordId],
   );
 
-  const onWordDragEnd = useCallback(() => {
+  const endDragAnim = useCallback(() => {
     if (draggingWordId && dragTargetWordId) {
       const settleRequest: DragSettleRequest = {
         fromWordId: draggingWordId,
@@ -354,14 +354,14 @@ export const useAnimationController = (
     () => ({
       draggingWordId,
       dragTargetWordId,
-      isDragLocked: Boolean(
+      isDragLockedAnim: Boolean(
         draggingWordId || layoutLockedWordId || pendingDragSettle,
       ),
       pendingDragSettle,
       layoutLockedWordId,
-      onWordDragStart,
-      onWordDragMove,
-      onWordDragEnd,
+      startDragAnim,
+      moveDragAnim,
+      endDragAnim,
       clearPendingDragSettle: () => setPendingDragSettle(null),
       clearLayoutLockedWord: () => setLayoutLockedWordId(null),
     }),
@@ -369,9 +369,9 @@ export const useAnimationController = (
       dragTargetWordId,
       draggingWordId,
       layoutLockedWordId,
-      onWordDragEnd,
-      onWordDragMove,
-      onWordDragStart,
+      endDragAnim,
+      moveDragAnim,
+      startDragAnim,
       pendingDragSettle,
     ],
   );
