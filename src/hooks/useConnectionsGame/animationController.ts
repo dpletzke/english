@@ -38,6 +38,8 @@ interface PlaySolveAnimationArgs {
 
 interface PlayMistakeAnimationArgs {
   wordIds: string[];
+  recordMistake?: boolean;
+  onAfterMistake?: () => void;
 }
 
 interface ShuffleWordsArgs {
@@ -56,10 +58,22 @@ interface AnimationControllerResult {
   reorderWords: (nextOrder: WordCard[]) => void;
   playSolveAnimation: (args: PlaySolveAnimationArgs) => void;
   playMistakeAnimation: (args: PlayMistakeAnimationArgs) => void;
+  playFailRevealSequence: (args: {
+    batches: FailRevealBatch[];
+    totalCategoryCount: number;
+  }) => void;
   swapWordCards: (fromWordId: string, toWordId: string) => void;
   resetAnimationState: () => void;
   cleanup: () => void;
 }
+
+interface FailRevealBatch {
+  categoryId: string;
+  wordIds: string[];
+}
+
+const FAIL_REVEAL_REORDER_DELAY_MS = 600;
+const FAIL_REVEAL_NEXT_BATCH_DELAY_MS = 200;
 
 export const useAnimationController = (
   options: UseAnimationControllerOptions,
@@ -83,6 +97,7 @@ export const useAnimationController = (
   const solveSortTimeoutRef = useRef<number | null>(null);
   const hopTimeoutsRef = useRef<number[]>([]);
   const settleTimeoutsRef = useRef<number[]>([]);
+  const failRevealTimeoutsRef = useRef<number[]>([]);
 
   const swapWordCards = useCallback(
     (fromWordId: string, toWordId: string) => {
@@ -124,13 +139,19 @@ export const useAnimationController = (
     () => clearTimeoutCollection(settleTimeoutsRef),
     [],
   );
+  const clearFailRevealTimeouts = useCallback(
+    () => clearTimeoutCollection(failRevealTimeoutsRef),
+    [],
+  );
 
   const cleanup = useCallback(() => {
     clearRevealTimeout();
     clearSolveSortTimeout();
     clearHopTimeouts();
     clearSettleTimeouts();
+    clearFailRevealTimeouts();
   }, [
+    clearFailRevealTimeouts,
     clearHopTimeouts,
     clearRevealTimeout,
     clearSettleTimeouts,
@@ -222,7 +243,11 @@ export const useAnimationController = (
   );
 
   const playMistakeAnimation = useCallback(
-    ({ wordIds }: PlayMistakeAnimationArgs) => {
+    ({
+      wordIds,
+      recordMistake = true,
+      onAfterMistake,
+    }: PlayMistakeAnimationArgs) => {
       setIsMistakeAnimating(true);
       const { settleDelayMs } = runHopSequence({
         ids: wordIds,
@@ -238,14 +263,100 @@ export const useAnimationController = (
         () => {
           clearFeedbackForIds(wordIds);
           setIsMistakeAnimating(false);
+          onAfterMistake?.();
         },
         settleDelayMs + HOP_TIMING.shakeDurationMs,
       );
-      onRecordMistake();
+      if (recordMistake) {
+        onRecordMistake();
+      }
     },
-    [availableWords, clearFeedbackForIds, onRecordMistake, setFeedbackForIds],
+    [
+      availableWords,
+      clearFeedbackForIds,
+      onRecordMistake,
+      setFeedbackForIds,
+    ],
   );
+  const playFailRevealSequence = useCallback(
+    ({
+      batches,
+      totalCategoryCount,
+    }: {
+      batches: FailRevealBatch[];
+      totalCategoryCount: number;
+    }) => {
+      if (batches.length === 0) {
+        onRecordMistake();
+        return;
+      }
 
+      resetDragContext();
+      setIsMistakeAnimating(true);
+      let workingWords = [...availableWords];
+
+      const playBatch = (index: number) => {
+        if (index >= batches.length) {
+          setIsMistakeAnimating(false);
+          onRecordMistake();
+          return;
+        }
+
+        const batch = batches[index];
+        if (batch.wordIds.length === 0) {
+          playBatch(index + 1);
+          return;
+        }
+
+        onMarkSolvePending({
+          categoryId: batch.categoryId,
+          wordIds: batch.wordIds,
+        });
+
+        const sortedWords = [...workingWords].sort((a, b) => {
+          const aSolved = batch.wordIds.includes(a.id);
+          const bSolved = batch.wordIds.includes(b.id);
+          if (aSolved === bSolved) {
+            return 0;
+          }
+          return aSolved ? -1 : 1;
+        });
+
+        workingWords = sortedWords.filter(
+          (card) => !batch.wordIds.includes(card.id),
+        );
+
+        onSetWordOrder(sortedWords);
+
+        const revealTimeout = window.setTimeout(() => {
+          clearFeedbackForIds(batch.wordIds);
+          onCompleteSolve({
+            categoryId: batch.categoryId,
+            wordIds: batch.wordIds,
+            totalCategoryCount,
+          });
+          const nextTimeout = window.setTimeout(
+            () => playBatch(index + 1),
+            FAIL_REVEAL_NEXT_BATCH_DELAY_MS,
+          );
+          failRevealTimeoutsRef.current.push(nextTimeout);
+        }, FAIL_REVEAL_REORDER_DELAY_MS);
+
+        failRevealTimeoutsRef.current.push(revealTimeout);
+      };
+
+      playBatch(0);
+    },
+    [
+      availableWords,
+      clearFeedbackForIds,
+      onCompleteSolve,
+      onMarkSolvePending,
+      onRecordMistake,
+      onSetWordOrder,
+      resetDragContext,
+    ],
+  );
   return {
     wordFeedback,
     setFeedbackForIds,
@@ -253,12 +364,13 @@ export const useAnimationController = (
     resetFeedback,
     isMistakeAnimating,
     dragState,
-    shuffleWords,
-    reorderWords,
-    playSolveAnimation,
-    playMistakeAnimation,
-    swapWordCards,
-    resetAnimationState,
-    cleanup,
+  shuffleWords,
+  reorderWords,
+  playSolveAnimation,
+  playMistakeAnimation,
+  playFailRevealSequence,
+  swapWordCards,
+  resetAnimationState,
+  cleanup,
   };
 };

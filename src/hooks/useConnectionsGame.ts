@@ -89,6 +89,7 @@ export const useConnectionsGame = (
     reorderWords: reorderWithAnimation,
     playSolveAnimation,
     playMistakeAnimation,
+    playFailRevealSequence,
   } = useAnimationController({
     availableWords,
     onSetWordOrder: setWordOrder,
@@ -238,6 +239,33 @@ export const useConnectionsGame = (
         categoryId: targetCategoryId,
         wordIds: solvedWordIds,
         totalCategoryCount: puzzle.categories.length,
+      });
+      dispatch({ type: "clearSelection" });
+      return;
+    }
+
+    if (mistakesRemaining === 1) {
+      const failRevealBatches = orderedUnsolvedCategories
+        .map((category) => {
+          const wordIds = availableWords
+            .filter((card) => card.categoryId === category.id)
+            .map((card) => card.id);
+          return {
+            categoryId: category.id,
+            wordIds,
+          };
+        })
+        .filter((batch) => batch.wordIds.length > 0);
+
+      playMistakeAnimation({
+        wordIds: candidateWordIds,
+        recordMistake: false,
+        onAfterMistake: () => {
+          playFailRevealSequence({
+            batches: failRevealBatches,
+            totalCategoryCount: puzzle.categories.length,
+          });
+        },
       });
       dispatch({ type: "clearSelection" });
       return;
