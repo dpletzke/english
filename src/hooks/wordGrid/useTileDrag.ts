@@ -99,13 +99,7 @@ export const useTileDrag = ({
     isDragLocked &&
     draggingWordId !== null &&
     draggingWordId !== cardId;
-  const buttonCursor = dragEnabled
-    ? isDragging
-      ? "grabbing"
-      : isLockedOut
-        ? "default"
-        : "grab"
-    : undefined;
+  const buttonCursor = dragEnabled && isDragging ? "grabbing" : undefined;
 
   const reportDragMove = useCallback(
     (nextTarget: string | null) => {

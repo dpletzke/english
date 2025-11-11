@@ -51,12 +51,6 @@ const WordItem = styled(Reorder.Item)<{
       outline: 2px solid var(--accent-color);
       outline-offset: 4px;
     `}
-  ${({ $dragEnabled, $isLockedOut, $isDragging }) =>
-    $dragEnabled &&
-    !$isLockedOut &&
-    css`
-      cursor: ${$isDragging ? "grabbing" : "pointer"};
-    `}
 `;
 
 interface WordTileProps {
