@@ -26,3 +26,7 @@ test-results
 *.sln
 *.sw?
 
+# Environment files
+.env
+.env.*
+!.env.example
