@@ -37,27 +37,43 @@ describe("prepareWordCards", () => {
   const basePuzzle: ConnectionsPuzzle = {
     date: "2024-01-01",
     categories: [
-      buildCategory({ id: "alpha", title: "Alpha", words: ["A1", "A2", "A3", "A4"] }),
-      buildCategory({ id: "beta", title: "Beta", words: ["B1", "B2", "B3", "B4"] }),
+      buildCategory({
+        id: "alpha",
+        title: "Alpha",
+        words: ["A1", "A2", "A3", "A4"],
+      }),
+      buildCategory({
+        id: "beta",
+        title: "Beta",
+        words: ["B1", "B2", "B3", "B4"],
+      }),
     ],
   };
 
-  it("returns cards honoring the puzzle starting order when provided", () => {
+  it("returns cards honoring the puzzle startGrid when provided", () => {
     const puzzle: ConnectionsPuzzle = {
       ...basePuzzle,
-      "starting order": ["B3", "A1", "A4"],
+      startGrid: ["B3", "A1", "A4"],
     };
 
     const cards = prepareWordCards(puzzle);
 
-    expect(cards.slice(0, 3).map((card) => card.label)).toEqual(["B3", "A1", "A4"]);
+    expect(cards.slice(0, 3).map((card) => card.label)).toEqual([
+      "B3",
+      "A1",
+      "A4",
+    ]);
     expect(cards).toHaveLength(8);
   });
 
-  it("returns sequential cards when no starting order is provided", () => {
+  it("returns sequential cards when no startGrid is provided", () => {
     const cards = prepareWordCards(basePuzzle);
 
-    expect(cards[0]).toMatchObject({ id: "alpha-0", label: "A1", categoryId: "alpha" });
+    expect(cards[0]).toMatchObject({
+      id: "alpha-0",
+      label: "A1",
+      categoryId: "alpha",
+    });
     expect(cards).toHaveLength(8);
   });
 });

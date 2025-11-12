@@ -1,7 +1,7 @@
 {
   "2025-10-15": {
     "date": "2025-10-15",
-    "starting order": [
+    "startGrid": [
       "CROSS",
       "WALK",
       "DRAW",
@@ -68,7 +68,7 @@
   },
   "2025-10-14": {
     "date": "2025-10-14",
-    "starting order": [
+    "startGrid": [
       "NIGHT",
       "DOG",
       "GREEN",
@@ -135,7 +135,7 @@
   },
   "2025-10-13": {
     "date": "2025-10-17",
-    "starting order": [
+    "startGrid": [
       "WHITE",
       "CHALK",
       "SCORE",
@@ -202,7 +202,7 @@
   },
   "2025-10-12": {
     "date": "2025-10-16",
-    "starting order": [
+    "startGrid": [
       "ELBOW",
       "LAKE",
       "HOLD",
@@ -269,7 +269,7 @@
   },
   "2025-10-31": {
     "date": "2025-10-19",
-    "starting order": [
+    "startGrid": [
       "SCORE",
       "POST",
       "CREDIT",
@@ -336,7 +336,7 @@
   },
   "2025-10-20": {
     "date": "2025-10-20",
-    "starting order": [
+    "startGrid": [
       "NIGHT",
       "WIND",
       "SHORT",
@@ -403,7 +403,7 @@
   },
   "2025-10-26": {
     "date": "2025-10-21",
-    "starting order": [
+    "startGrid": [
       "LADLE",
       "WHISK",
       "TONGS",
@@ -470,7 +470,7 @@
   },
   "2025-10-21": {
     "date": "2025-10-16",
-    "starting order": [
+    "startGrid": [
       "WATER",
       "FIRE",
       "BULLET",
@@ -537,7 +537,7 @@
   },
   "2025-10-30": {
     "date": "2025-10-23",
-    "starting order": [
+    "startGrid": [
       "BREAK",
       "SET",
       "TIE",

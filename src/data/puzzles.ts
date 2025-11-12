@@ -12,7 +12,7 @@ export interface CategoryDefinition {
 export interface ConnectionsPuzzle {
   date: string;
   categories: CategoryDefinition[];
-  "starting order"?: string[];
+  startGrid?: string[];
 }
 
 const puzzlesByDate = puzzlesJson as Record<string, ConnectionsPuzzle>;
