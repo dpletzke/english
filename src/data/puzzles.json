@@ -1,0 +1,605 @@
+{
+  "2025-10-15": {
+    "date": "2025-10-15",
+    "starting order": [
+      "CROSS",
+      "WALK",
+      "DRAW",
+      "SILENT",
+      "IRON",
+      "BISHOP",
+      "GOLD",
+      "TOE",
+      "KNIGHT",
+      "COPPER",
+      "ROOK",
+      "HUSHED",
+      "PAWN",
+      "STILL",
+      "MUTE",
+      "SILVER"
+    ],
+    "categories": [
+      {
+        "id": "metals",
+        "title": "Metals",
+        "color": "yellow",
+        "words": [
+          "IRON",
+          "COPPER",
+          "SILVER",
+          "GOLD"
+        ]
+      },
+      {
+        "id": "chess-pieces",
+        "title": "Chess pieces",
+        "color": "green",
+        "words": [
+          "ROOK",
+          "BISHOP",
+          "KNIGHT",
+          "PAWN"
+        ]
+      },
+      {
+        "id": "quiet-synonyms",
+        "title": "Quiet",
+        "color": "blue",
+        "words": [
+          "SILENT",
+          "HUSHED",
+          "MUTE",
+          "STILL"
+        ]
+      },
+      {
+        "id": "idioms-line",
+        "title": "_____ the line",
+        "color": "purple",
+        "words": [
+          "TOE",
+          "CROSS",
+          "WALK",
+          "DRAW"
+        ]
+      }
+    ]
+  },
+  "2025-10-14": {
+    "date": "2025-10-14",
+    "starting order": [
+      "NIGHT",
+      "DOG",
+      "GREEN",
+      "LIME",
+      "MORNING",
+      "CLUB",
+      "ORANGE",
+      "GUY",
+      "SCHOOL",
+      "BYE",
+      "LEMON",
+      "LIE",
+      "AFTERNOON",
+      "SHY",
+      "EVENING",
+      "GRAPEFRUIT"
+    ],
+    "categories": [
+      {
+        "id": "day-sequence",
+        "title": "Parts of the day",
+        "color": "yellow",
+        "words": [
+          "MORNING",
+          "AFTERNOON",
+          "EVENING",
+          "NIGHT"
+        ]
+      },
+      {
+        "id": "citrus",
+        "title": "Citrus fruits",
+        "color": "green",
+        "words": [
+          "LEMON",
+          "LIME",
+          "ORANGE",
+          "GRAPEFRUIT"
+        ]
+      },
+      {
+        "id": "rhyme-eye",
+        "title": "Rhymes with \"My\"",
+        "color": "blue",
+        "words": [
+          "SHY",
+          "BYE",
+          "LIE",
+          "GUY"
+        ]
+      },
+      {
+        "id": "house-neighbor",
+        "title": "Words before \"house\"",
+        "color": "purple",
+        "words": [
+          "DOG",
+          "CLUB",
+          "SCHOOL",
+          "GREEN"
+        ]
+      }
+    ]
+  },
+  "2025-10-13": {
+    "date": "2025-10-17",
+    "starting order": [
+      "WHITE",
+      "CHALK",
+      "SCORE",
+      "SURF",
+      "BLUE",
+      "CHEW",
+      "BACK",
+      "SUPPORT",
+      "AID",
+      "ASSIST",
+      "SHOE",
+      "THROUGH",
+      "OAK",
+      "PINE",
+      "MAPLE",
+      "BIRCH"
+    ],
+    "categories": [
+      {
+        "id": "trees",
+        "title": "Trees",
+        "color": "yellow",
+        "words": [
+          "OAK",
+          "PINE",
+          "MAPLE",
+          "BIRCH"
+        ]
+      },
+      {
+        "id": "help-synonyms",
+        "title": "Help",
+        "color": "green",
+        "words": [
+          "AID",
+          "ASSIST",
+          "SUPPORT",
+          "BACK"
+        ]
+      },
+      {
+        "id": "rhyme-oo",
+        "title": "Rhymes with \"You\"",
+        "color": "blue",
+        "words": [
+          "BLUE",
+          "SHOE",
+          "CHEW",
+          "THROUGH"
+        ]
+      },
+      {
+        "id": "board-neighbor",
+        "title": "Words before \"board\"",
+        "color": "purple",
+        "words": [
+          "WHITE",
+          "CHALK",
+          "SCORE",
+          "SURF"
+        ]
+      }
+    ]
+  },
+  "2025-10-12": {
+    "date": "2025-10-16",
+    "starting order": [
+      "ELBOW",
+      "LAKE",
+      "HOLD",
+      "HILL",
+      "WAFFLE",
+      "OATMEAL",
+      "CEREAL",
+      "PANCAKE",
+      "CATCH",
+      "SAVE",
+      "WASTE",
+      "RIVER",
+      "WRIST",
+      "ANKLE",
+      "KNEE",
+      "COUNTRY"
+    ],
+    "categories": [
+      {
+        "id": "joints",
+        "title": "Body joints",
+        "color": "yellow",
+        "words": [
+          "WRIST",
+          "ANKLE",
+          "ELBOW",
+          "KNEE"
+        ]
+      },
+      {
+        "id": "breakfast-foods",
+        "title": "Breakfast foods",
+        "color": "green",
+        "words": [
+          "WAFFLE",
+          "OATMEAL",
+          "CEREAL",
+          "PANCAKE"
+        ]
+      },
+      {
+        "id": "breath-idioms",
+        "title": "“___ your breath”",
+        "color": "blue",
+        "words": [
+          "HOLD",
+          "CATCH",
+          "SAVE",
+          "WASTE"
+        ]
+      },
+      {
+        "id": "side-neighbor",
+        "title": "Words before \"side\"",
+        "color": "purple",
+        "words": [
+          "HILL",
+          "LAKE",
+          "RIVER",
+          "COUNTRY"
+        ]
+      }
+    ]
+  },
+  "2025-10-31": {
+    "date": "2025-10-19",
+    "starting order": [
+      "SCORE",
+      "POST",
+      "CREDIT",
+      "ID",
+      "INCH",
+      "MILE",
+      "LITER",
+      "POUND",
+      "EXACT",
+      "ACCURATE",
+      "PRECISE",
+      "CORRECT",
+      "MATH",
+      "HISTORY",
+      "CHEMISTRY",
+      "ART"
+    ],
+    "categories": [
+      {
+        "id": "units",
+        "title": "Units",
+        "color": "yellow",
+        "words": [
+          "INCH",
+          "MILE",
+          "LITER",
+          "POUND"
+        ]
+      },
+      {
+        "id": "school-subjects",
+        "title": "School subjects",
+        "color": "green",
+        "words": [
+          "MATH",
+          "HISTORY",
+          "CHEMISTRY",
+          "ART"
+        ]
+      },
+      {
+        "id": "exact-synonyms",
+        "title": "Definite",
+        "color": "blue",
+        "words": [
+          "EXACT",
+          "PRECISE",
+          "ACCURATE",
+          "CORRECT"
+        ]
+      },
+      {
+        "id": "card-neighbor",
+        "title": "_____ card",
+        "color": "purple",
+        "words": [
+          "CREDIT",
+          "SCORE",
+          "POST",
+          "ID"
+        ]
+      }
+    ]
+  },
+  "2025-10-20": {
+    "date": "2025-10-20",
+    "starting order": [
+      "NIGHT",
+      "WIND",
+      "SHORT",
+      "RAIN",
+      "PLAN",
+      "BUILD",
+      "TEST",
+      "DEPLOY",
+      "CUBE",
+      "SPHERE",
+      "CONE",
+      "CYLINDER",
+      "THUNDER",
+      "LIGHTNING",
+      "HAIL",
+      "SLEET"
+    ],
+    "categories": [
+      {
+        "id": "shapes",
+        "title": "3D shapes",
+        "color": "yellow",
+        "words": [
+          "CUBE",
+          "SPHERE",
+          "CONE",
+          "CYLINDER"
+        ]
+      },
+      {
+        "id": "weather",
+        "title": "Weather terms",
+        "color": "green",
+        "words": [
+          "THUNDER",
+          "LIGHTNING",
+          "HAIL",
+          "SLEET"
+        ]
+      },
+      {
+        "id": "project-stages",
+        "title": "Project stages",
+        "color": "blue",
+        "words": [
+          "PLAN",
+          "BUILD",
+          "TEST",
+          "DEPLOY"
+        ]
+      },
+      {
+        "id": "fall-neighbor",
+        "title": "Words before \"fall\"",
+        "color": "purple",
+        "words": [
+          "NIGHT",
+          "RAIN",
+          "SHORT",
+          "WIND"
+        ]
+      }
+    ]
+  },
+  "2025-10-26": {
+    "date": "2025-10-21",
+    "starting order": [
+      "LADLE",
+      "WHISK",
+      "TONGS",
+      "SPATULA",
+      "TAKE",
+      "WASTE",
+      "BIDE",
+      "KILL",
+      "STAPLER",
+      "ENVELOPE",
+      "NOTEBOOK",
+      "HIGHLIGHTER",
+      "LIP",
+      "CANDLE",
+      "BREAD",
+      "JOY"
+    ],
+    "categories": [
+      {
+        "id": "kitchen-tools",
+        "title": "Kitchen tools",
+        "color": "yellow",
+        "words": [
+          "LADLE",
+          "WHISK",
+          "TONGS",
+          "SPATULA"
+        ]
+      },
+      {
+        "id": "office-supplies",
+        "title": "Office supplies",
+        "color": "green",
+        "words": [
+          "STAPLER",
+          "ENVELOPE",
+          "NOTEBOOK",
+          "HIGHLIGHTER"
+        ]
+      },
+      {
+        "id": "time-idioms",
+        "title": "“___ your time”",
+        "color": "blue",
+        "words": [
+          "TAKE",
+          "KILL",
+          "WASTE",
+          "BIDE"
+        ]
+      },
+      {
+        "id": "stick-neighbor",
+        "title": "Words before “stick“",
+        "color": "purple",
+        "words": [
+          "LIP",
+          "JOY",
+          "CANDLE",
+          "BREAD"
+        ]
+      }
+    ]
+  },
+  "2025-10-21": {
+    "date": "2025-10-16",
+    "starting order": [
+      "WATER",
+      "FIRE",
+      "BULLET",
+      "SOUND",
+      "PEACH",
+      "CHERRY",
+      "PLUM",
+      "APRICOT",
+      "ADD",
+      "SUBTRACT",
+      "MULTIPLY",
+      "DIVIDE",
+      "INFANCY",
+      "CHILDHOOD",
+      "ADOLESCENCE",
+      "ADULTHOOD"
+    ],
+    "categories": [
+      {
+        "id": "stone-fruits",
+        "title": "Fruits with pits",
+        "color": "yellow",
+        "words": [
+          "PEACH",
+          "CHERRY",
+          "PLUM",
+          "APRICOT"
+        ]
+      },
+      {
+        "id": "arithmetic-ops",
+        "title": "Arithmetic operations",
+        "color": "green",
+        "words": [
+          "ADD",
+          "SUBTRACT",
+          "MULTIPLY",
+          "DIVIDE"
+        ]
+      },
+      {
+        "id": "proof-compounds",
+        "title": "______-proof",
+        "color": "blue",
+        "words": [
+          "WATER",
+          "IDIOT",
+          "BULLET",
+          "SOUND"
+        ]
+      },
+      {
+        "id": "life-stages",
+        "title": "Life stages",
+        "color": "purple",
+        "words": [
+          "INFANCY",
+          "CHILDHOOD",
+          "ADOLESCENCE",
+          "ADULTHOOD"
+        ]
+      }
+    ]
+  },
+  "2025-10-30": {
+    "date": "2025-10-23",
+    "starting order": [
+      "BREAK",
+      "SET",
+      "TIE",
+      "SMASH",
+      "TWO",
+      "SHOE",
+      "FLU",
+      "THROUGH",
+      "CHAIR",
+      "TABLE",
+      "SOFA",
+      "DRESSER",
+      "HAMMER",
+      "SAW",
+      "DRILL",
+      "CHISEL"
+    ],
+    "categories": [
+      {
+        "id": "furniture",
+        "title": "Furniture",
+        "color": "yellow",
+        "words": [
+          "CHAIR",
+          "TABLE",
+          "SOFA",
+          "DRESSER"
+        ]
+      },
+      {
+        "id": "hand-tools",
+        "title": "Hand tools",
+        "color": "green",
+        "words": [
+          "HAMMER",
+          "SAW",
+          "DRILL",
+          "CHISEL"
+        ]
+      },
+      {
+        "id": "record-idioms",
+        "title": "“___ the record”",
+        "color": "blue",
+        "words": [
+          "BREAK",
+          "SET",
+          "TIE",
+          "SMASH"
+        ]
+      },
+      {
+        "id": "rhyme-oo-distinct",
+        "title": "Rhymes with “You“",
+        "color": "purple",
+        "words": [
+          "TWO",
+          "SHOE",
+          "FLU",
+          "THROUGH"
+        ]
+      }
+    ]
+  }
+}
