@@ -22,7 +22,7 @@ export const prepareWordCards = (puzzle: ConnectionsPuzzle): WordCard[] => {
     })),
   );
 
-  const startingOrder = puzzle["startGrid"];
+  const startingOrder = puzzle.startGrid;
   if (!startingOrder?.length) {
     return cards;
   }
