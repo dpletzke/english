@@ -24,9 +24,9 @@ interface WordGridProps {
 }
 
 const Grid = styled.div`
-  --grid-max-size: max(0px, min(520px, calc(100vh - 320px)));
+  --grid-max-size: max(0px, min(520px, calc(100dvh - 320px)));
   display: grid;
-  gap: 12px;
+  gap: clamp(8px, 2vw, 12px);
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-template-rows: repeat(4, minmax(0, 1fr));
   width: min(100%, var(--grid-max-size));

@@ -4,10 +4,10 @@ const Page = styled.main`
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   width: 100%;
-  height: 100vh;
-  padding-block: 48px;
+  min-height: 100dvh;
+  padding: 48px clamp(4px, 2vw, 24px);
   gap: 24px;
 `;
 

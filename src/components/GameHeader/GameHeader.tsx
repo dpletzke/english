@@ -8,7 +8,7 @@ interface GameHeaderProps {
 const Header = styled.header`
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: clamp(2px, 1vw, 8px);
   align-items: center;
   text-align: center;
   width: 100%;
@@ -16,12 +16,12 @@ const Header = styled.header`
 
 const Title = styled.h1`
   margin: 0;
-  font-size: 32px;
+  font-size: clamp(22px, 6vw, 32px);
   letter-spacing: 1px;
 `;
 
 const Subtitle = styled.span`
-  font-size: 16px;
+  font-size: clamp(14px, 3.5vw, 16px);
   color: #5d5d5d;
 `;
 
