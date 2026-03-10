@@ -27,6 +27,7 @@ export const useAnimationController = (
     onSetWordOrder,
     onMarkSolvePending,
     onCompleteSolve,
+    onCompleteReveal,
     onRecordMistake,
   } = options;
 
@@ -89,21 +90,23 @@ export const useAnimationController = (
   );
 
   const finalizeSolve = useCallback(
-    ({
-      categoryId,
-      wordIds,
-      totalCategoryCount,
-      allowWinTransition,
-    }: PlaySolveAnimationArgs) => {
+    ({ categoryId, wordIds, totalCategoryCount }: PlaySolveAnimationArgs) => {
       clearFeedbackForIds(wordIds);
       onCompleteSolve({
         categoryId,
         wordIds,
         totalCategoryCount,
-        allowWinTransition,
       });
     },
     [clearFeedbackForIds, onCompleteSolve],
+  );
+
+  const finalizeReveal = useCallback(
+    ({ categoryId, wordIds }: { categoryId: string; wordIds: string[] }) => {
+      clearFeedbackForIds(wordIds);
+      onCompleteReveal({ categoryId, wordIds });
+    },
+    [clearFeedbackForIds, onCompleteReveal],
   );
 
   const cleanup = useCallback(() => {
@@ -163,7 +166,7 @@ export const useAnimationController = (
   const playFailRevealSequence = useFailRevealAnimator({
     availableWords,
     failRevealTimeoutsRef,
-    finalizeSolve,
+    finalizeReveal,
     onMarkSolvePending,
     onRecordMistake,
     onSetWordOrder,

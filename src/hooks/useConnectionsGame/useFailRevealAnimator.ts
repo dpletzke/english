@@ -4,7 +4,7 @@ import type { WordCard } from "../../game/types";
 import type { PendingSolve } from "./gameReducer";
 import { scheduleManagedTimeout } from "./timeouts";
 import { reorderWordsWithSolvedFirst } from "./wordOrdering";
-import type { FailRevealBatch, PlaySolveAnimationArgs } from "./animationTypes";
+import type { FailRevealBatch } from "./animationTypes";
 
 const FAIL_REVEAL_REORDER_DELAY_MS = 600;
 const FAIL_REVEAL_NEXT_BATCH_DELAY_MS = 200;
@@ -12,7 +12,7 @@ const FAIL_REVEAL_NEXT_BATCH_DELAY_MS = 200;
 interface UseFailRevealAnimatorArgs {
   availableWords: WordCard[];
   failRevealTimeoutsRef: MutableRefObject<number[]>;
-  finalizeSolve: (args: PlaySolveAnimationArgs) => void;
+  finalizeReveal: (args: { categoryId: string; wordIds: string[] }) => void;
   onMarkSolvePending: (payload: PendingSolve) => void;
   onRecordMistake: () => void;
   onSetWordOrder: (words: WordCard[]) => void;
@@ -23,7 +23,7 @@ interface UseFailRevealAnimatorArgs {
 export const useFailRevealAnimator = ({
   availableWords,
   failRevealTimeoutsRef,
-  finalizeSolve,
+  finalizeReveal,
   onMarkSolvePending,
   onRecordMistake,
   onSetWordOrder,
@@ -33,10 +33,8 @@ export const useFailRevealAnimator = ({
   return useCallback(
     ({
       batches,
-      totalCategoryCount,
     }: {
       batches: FailRevealBatch[];
-      totalCategoryCount: number;
     }) => {
       if (batches.length === 0) {
         onRecordMistake();
@@ -74,11 +72,9 @@ export const useFailRevealAnimator = ({
         scheduleManagedTimeout(
           failRevealTimeoutsRef,
           () => {
-            finalizeSolve({
+            finalizeReveal({
               categoryId: batch.categoryId,
               wordIds: batch.wordIds,
-              totalCategoryCount,
-              allowWinTransition: false,
             });
             scheduleManagedTimeout(
               failRevealTimeoutsRef,
@@ -95,7 +91,7 @@ export const useFailRevealAnimator = ({
     [
       availableWords,
       failRevealTimeoutsRef,
-      finalizeSolve,
+      finalizeReveal,
       onMarkSolvePending,
       onRecordMistake,
       onSetWordOrder,
