@@ -41,11 +41,86 @@ const getPuzzlesBaseUrl = (): string => {
   return sanitizeBaseUrl(baseUrl);
 };
 
+const sortDateKeysDescending = (dateKeys: string[]): string[] =>
+  [...new Set(dateKeys)].sort().reverse();
+
 const localPuzzlesByDate = localPuzzlesJson as Record<
   string,
   ConnectionsPuzzle
 >;
 const localPuzzleKeys = Object.keys(localPuzzlesByDate).sort();
+const localManifestPayload = {
+  puzzles: localPuzzleKeys.map((date) => ({
+    date,
+    path: `puzzles/${date}.json`,
+  })),
+};
+
+const manifestRequestCache = new Map<string, Promise<string[]>>();
+
+const normalizeManifestPayload = (payload: unknown): string[] => {
+  if (payload && typeof payload === "object" && "puzzles" in payload) {
+    const maybePuzzles = (payload as { puzzles?: unknown }).puzzles;
+    if (Array.isArray(maybePuzzles)) {
+      return maybePuzzles
+        .map((entry) => {
+          if (!entry || typeof entry !== "object") {
+            return null;
+          }
+          const maybeDate = (entry as { date?: unknown }).date;
+          return typeof maybeDate === "string" ? maybeDate : null;
+        })
+        .filter((date): date is string => Boolean(date));
+    }
+  }
+
+  throw new Error("Invalid manifest payload");
+};
+
+const requestManifest = async (): Promise<string[]> => {
+  const baseUrl = getPuzzlesBaseUrl();
+  const manifestPaths = ["manifest.json", "puzzles/manifest.json"];
+  let lastError: Error | undefined;
+
+  for (const path of manifestPaths) {
+    try {
+      const response = await fetch(`${baseUrl}/${path}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch puzzle manifest (${response.status})`);
+      }
+
+      const payload = await response.json();
+      const dates = normalizeManifestPayload(payload);
+      if (!dates.length) {
+        throw new Error("Puzzle manifest is empty");
+      }
+
+      return sortDateKeysDescending(dates);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error("Manifest request failed");
+    }
+  }
+
+  if (import.meta.env.MODE !== "production" && localPuzzleKeys.length > 0) {
+    console.warn("Puzzle manifest unreachable, using local fallback puzzle list");
+    return sortDateKeysDescending(normalizeManifestPayload(localManifestPayload));
+  }
+
+  throw lastError ?? new Error("Failed to fetch puzzle manifest");
+};
+
+export const fetchPuzzleManifest = async (): Promise<string[]> => {
+  const cacheKey = "manifest";
+  if (!manifestRequestCache.has(cacheKey)) {
+    const request = requestManifest().catch((error) => {
+      manifestRequestCache.delete(cacheKey);
+      throw error;
+    });
+    manifestRequestCache.set(cacheKey, request);
+  }
+
+  return manifestRequestCache.get(cacheKey)!;
+};
 
 const selectFallbackPuzzle = (
   dateKey: string,
@@ -126,6 +201,18 @@ export const formatPuzzleDateLabel = (dateKey: string): string => {
     month: "long",
     day: "numeric",
     year: "numeric",
+  });
+};
+
+export const formatPuzzleDateShortLabel = (dateKey: string): string => {
+  const [year, month, day] = dateKey
+    .split("-")
+    .map((segment) => Number(segment));
+  const parsed = new Date(year, month - 1, day);
+  return parsed.toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
   });
 };
 

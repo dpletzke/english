@@ -3,6 +3,7 @@ import type { ConnectionsPuzzle } from "../data/puzzles";
 import { fetchPuzzleByDateKey, getPuzzleDateKey } from "../data/puzzles";
 
 type LoadingState = { status: "loading"; puzzle?: undefined; error?: undefined };
+type IdleState = { status: "idle"; puzzle?: undefined; error?: undefined };
 type LoadedState = {
   status: "loaded";
   puzzle: ConnectionsPuzzle;
@@ -10,18 +11,29 @@ type LoadedState = {
 };
 type ErrorState = { status: "error"; puzzle?: undefined; error: Error };
 
-type PuzzleState = (LoadingState | LoadedState | ErrorState) & {
+type PuzzleState = (LoadingState | IdleState | LoadedState | ErrorState) & {
   dateKey: string;
 };
 
-export const useDailyPuzzle = (date: Date) => {
-  const dateKey = useMemo(() => getPuzzleDateKey(date), [date]);
+export const useDailyPuzzle = (date: Date | string | null) => {
+  const dateKey = useMemo(() => {
+    if (date instanceof Date) {
+      return getPuzzleDateKey(date);
+    }
+
+    return date ?? "";
+  }, [date]);
   const [state, setState] = useState<PuzzleState>(() => ({
-    status: "loading",
+    status: dateKey ? "loading" : "idle",
     dateKey,
   }));
 
   useEffect(() => {
+    if (!dateKey) {
+      setState({ status: "idle", dateKey: "" });
+      return undefined;
+    }
+
     let isSubscribed = true;
     setState({ status: "loading", dateKey });
 
