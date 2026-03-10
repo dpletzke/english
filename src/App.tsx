@@ -5,6 +5,10 @@ import {
   formatPuzzleDateShortLabel,
   getPuzzleDateKey,
 } from "./data/puzzles";
+import {
+  getPuzzleResult,
+  PUZZLE_PROGRESS_UPDATED_EVENT,
+} from "./game/puzzleProgress";
 import { useConnectionsGame } from "./hooks/useConnectionsGame";
 import { useDailyPuzzle } from "./hooks/useDailyPuzzle";
 import { usePuzzleManifest } from "./hooks/usePuzzleManifest";
@@ -33,6 +37,7 @@ declare global {
 
 const SELECTED_PUZZLE_DATE_STORAGE_KEY = "selectedPuzzleDate";
 const DATE_SHEET_ID = "puzzle-date-picker";
+type DateStatus = "won" | "lost" | "pending";
 
 const App = () => {
   const todayDateKey = useMemo(() => getPuzzleDateKey(new Date()), []);
@@ -48,6 +53,7 @@ const App = () => {
   const [selectedDateKey, setSelectedDateKey] = useState<string>(
     storedDateKey || todayDateKey,
   );
+  const [progressRevision, setProgressRevision] = useState(0);
   const [activeDateKey, setActiveDateKey] = useState<string | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const puzzleState = useDailyPuzzle(activeDateKey);
@@ -66,6 +72,16 @@ const App = () => {
   const dateLabelKey =
     activeDateKey ?? selectedDateKey ?? manifest.latestAvailable ?? todayDateKey;
   const dateLabelShort = formatPuzzleDateShortLabel(dateLabelKey);
+  const dateStatuses = useMemo<Record<string, DateStatus>>(
+    () =>
+      Object.fromEntries(
+        availableDates.map((dateKey) => {
+          const result = getPuzzleResult(dateKey);
+          return [dateKey, result ?? "pending"];
+        }),
+      ),
+    [availableDates, progressRevision],
+  );
 
   const openDatePicker = () => setIsDatePickerOpen(true);
   const closeDatePicker = () => setIsDatePickerOpen(false);
@@ -147,6 +163,24 @@ const App = () => {
     }
 
     return undefined;
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    const handleProgressUpdated = () => {
+      setProgressRevision((value) => value + 1);
+    };
+
+    window.addEventListener(PUZZLE_PROGRESS_UPDATED_EVENT, handleProgressUpdated);
+    return () => {
+      window.removeEventListener(
+        PUZZLE_PROGRESS_UPDATED_EVENT,
+        handleProgressUpdated,
+      );
+    };
   }, []);
 
   return (
@@ -233,6 +267,7 @@ const App = () => {
           availableDates={availableDates}
           selectedDateKey={selectedDateKey}
           onSelect={handleSelectDate}
+          dateStatuses={dateStatuses}
           todayDateKey={todayDateKey}
           dialogId={DATE_SHEET_ID}
         />

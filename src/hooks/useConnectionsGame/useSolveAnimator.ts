@@ -37,7 +37,12 @@ export const useSolveAnimator = ({
   solveSortTimeoutRef,
 }: UseSolveAnimatorArgs) => {
   return useCallback(
-    ({ categoryId, wordIds, totalCategoryCount }: PlaySolveAnimationArgs) => {
+    ({
+      categoryId,
+      wordIds,
+      totalCategoryCount,
+      allowWinTransition,
+    }: PlaySolveAnimationArgs) => {
       const { settleDelayMs } = runHopSequence({
         ids: wordIds,
         availableWords,
@@ -68,6 +73,7 @@ export const useSolveAnimator = ({
           categoryId,
           wordIds,
           totalCategoryCount,
+          allowWinTransition,
         });
         revealTimeoutRef.current = null;
       }, revealDelay);
