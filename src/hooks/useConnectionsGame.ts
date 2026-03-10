@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer } from "react";
 import type { CategoryDefinition, ConnectionsPuzzle } from "../data/puzzles";
 import type { GameStatus, WordCard, WordCardFeedbackMap } from "../game/types";
 import { DEFAULT_MISTAKES_ALLOWED } from "../game/constants";
 import { orderedCategories, shuffle } from "../game/utils";
 import {
   getPuzzleResult,
-  hasPuzzleBeenSolved,
   markPuzzleLost,
   markPuzzleSolved,
 } from "../game/puzzleProgress";
@@ -27,7 +26,6 @@ interface UseConnectionsGameResult {
   mistakesAllowed: number;
   mistakesRemaining: number;
   status: GameStatus;
-  hasSolvedPuzzle: boolean;
   isInteractionLocked: boolean;
   onToggleWord: (wordId: string) => void;
   reorderWords: (nextOrder: WordCard[]) => void;
@@ -40,18 +38,11 @@ export const useConnectionsGame = (
   puzzle: ConnectionsPuzzle,
 ): UseConnectionsGameResult => {
   const mistakesAllowed = DEFAULT_MISTAKES_ALLOWED;
-  const initialPuzzleResult = getPuzzleResult(puzzle.date);
-  const [hasSolvedPuzzle, setHasSolvedPuzzle] = useState<boolean>(() =>
-    hasPuzzleBeenSolved(puzzle.date),
-  );
   const [gameState, dispatch] = useReducer(
     gameReducer,
-    {
-      puzzle,
-      persistedResult: initialPuzzleResult,
-    },
-    ({ puzzle: initialPuzzle, persistedResult }) =>
-      buildInitialState(initialPuzzle, persistedResult),
+    puzzle,
+    (initialPuzzle) =>
+      buildInitialState(initialPuzzle, getPuzzleResult(initialPuzzle.date)),
   );
   const {
     availableWords,
@@ -143,13 +134,11 @@ export const useConnectionsGame = (
       persistedResult: getPuzzleResult(puzzle.date),
     });
     resetAnimationState();
-    setHasSolvedPuzzle(hasPuzzleBeenSolved(puzzle.date));
   }, [puzzle, resetAnimationState]);
 
   useEffect(() => {
     if (status === "won") {
       markPuzzleSolved(puzzle.date);
-      setHasSolvedPuzzle(true);
       return;
     }
 
@@ -385,7 +374,6 @@ export const useConnectionsGame = (
     mistakesAllowed,
     mistakesRemaining,
     status,
-    hasSolvedPuzzle,
     isInteractionLocked,
     onToggleWord,
     reorderWords,
