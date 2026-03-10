@@ -1,8 +1,14 @@
-import { useCallback, useEffect, useMemo, useReducer } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import type { CategoryDefinition, ConnectionsPuzzle } from "../data/puzzles";
 import type { GameStatus, WordCard, WordCardFeedbackMap } from "../game/types";
 import { DEFAULT_MISTAKES_ALLOWED } from "../game/constants";
 import { orderedCategories, shuffle } from "../game/utils";
+import {
+  getPuzzleResult,
+  hasPuzzleBeenSolved,
+  markPuzzleLost,
+  markPuzzleSolved,
+} from "../game/puzzleProgress";
 import type { WordGridDragConfig } from "../game/dragTypes";
 import {
   buildInitialState,
@@ -21,6 +27,7 @@ interface UseConnectionsGameResult {
   mistakesAllowed: number;
   mistakesRemaining: number;
   status: GameStatus;
+  hasSolvedPuzzle: boolean;
   isInteractionLocked: boolean;
   onToggleWord: (wordId: string) => void;
   reorderWords: (nextOrder: WordCard[]) => void;
@@ -33,10 +40,18 @@ export const useConnectionsGame = (
   puzzle: ConnectionsPuzzle,
 ): UseConnectionsGameResult => {
   const mistakesAllowed = DEFAULT_MISTAKES_ALLOWED;
+  const initialPuzzleResult = getPuzzleResult(puzzle.date);
+  const [hasSolvedPuzzle, setHasSolvedPuzzle] = useState<boolean>(() =>
+    hasPuzzleBeenSolved(puzzle.date),
+  );
   const [gameState, dispatch] = useReducer(
     gameReducer,
-    puzzle,
-    buildInitialState,
+    {
+      puzzle,
+      persistedResult: initialPuzzleResult,
+    },
+    ({ puzzle: initialPuzzle, persistedResult }) =>
+      buildInitialState(initialPuzzle, persistedResult),
   );
   const {
     availableWords,
@@ -60,16 +75,19 @@ export const useConnectionsGame = (
       categoryId,
       wordIds,
       totalCategoryCount,
+      allowWinTransition,
     }: {
       categoryId: string;
       wordIds: string[];
       totalCategoryCount: number;
+      allowWinTransition?: boolean;
     }) =>
       dispatch({
         type: "completeSolve",
         categoryId,
         wordIds,
         totalCategoryCount,
+        allowWinTransition,
       }),
     [dispatch],
   );
@@ -111,9 +129,26 @@ export const useConnectionsGame = (
   } = dragState;
 
   useEffect(() => {
-    dispatch({ type: "hydratePuzzle", puzzle });
+    dispatch({
+      type: "hydratePuzzle",
+      puzzle,
+      persistedResult: getPuzzleResult(puzzle.date),
+    });
     resetAnimationState();
+    setHasSolvedPuzzle(hasPuzzleBeenSolved(puzzle.date));
   }, [puzzle, resetAnimationState]);
+
+  useEffect(() => {
+    if (status === "won") {
+      markPuzzleSolved(puzzle.date);
+      setHasSolvedPuzzle(true);
+      return;
+    }
+
+    if (status === "lost") {
+      markPuzzleLost(puzzle.date);
+    }
+  }, [status, puzzle.date]);
 
   useEffect(
     () => () => {
@@ -327,6 +362,7 @@ export const useConnectionsGame = (
     mistakesAllowed,
     mistakesRemaining,
     status,
+    hasSolvedPuzzle,
     isInteractionLocked,
     onToggleWord,
     reorderWords,

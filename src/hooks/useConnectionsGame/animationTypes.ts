@@ -14,6 +14,7 @@ export interface UseAnimationControllerOptions {
     categoryId: string;
     wordIds: string[];
     totalCategoryCount: number;
+    allowWinTransition?: boolean;
   }) => void;
   onRecordMistake: () => void;
 }
@@ -22,6 +23,7 @@ export interface PlaySolveAnimationArgs {
   categoryId: string;
   wordIds: string[];
   totalCategoryCount: number;
+  allowWinTransition?: boolean;
 }
 
 export interface PlayMistakeAnimationArgs {

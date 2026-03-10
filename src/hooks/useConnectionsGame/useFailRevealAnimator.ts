@@ -78,6 +78,7 @@ export const useFailRevealAnimator = ({
               categoryId: batch.categoryId,
               wordIds: batch.wordIds,
               totalCategoryCount,
+              allowWinTransition: false,
             });
             scheduleManagedTimeout(
               failRevealTimeoutsRef,

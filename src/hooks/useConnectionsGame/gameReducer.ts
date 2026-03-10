@@ -1,7 +1,8 @@
 import { DEFAULT_MISTAKES_ALLOWED } from "../../game/constants";
-import { prepareWordCards } from "../../game/utils";
+import { orderedCategories, prepareWordCards } from "../../game/utils";
 import type { ConnectionsPuzzle } from "../../data/puzzles";
 import type { GameStatus, WordCard } from "../../game/types";
+import type { PuzzleResult } from "../../game/puzzleProgress";
 
 interface PendingSolve {
   categoryId: string;
@@ -20,6 +21,7 @@ export interface GameState {
 interface HydratePuzzleAction {
   type: "hydratePuzzle";
   puzzle: ConnectionsPuzzle;
+  persistedResult?: PuzzleResult | null;
 }
 
 interface ToggleWordAction {
@@ -42,6 +44,7 @@ interface CompleteSolveAction {
   categoryId: string;
   wordIds: string[];
   totalCategoryCount: number;
+  allowWinTransition?: boolean;
 }
 
 interface RecordMistakeAction {
@@ -61,19 +64,39 @@ type GameAction =
   | RecordMistakeAction
   | ClearSelectionAction;
 
-export const buildInitialState = (puzzle: ConnectionsPuzzle): GameState => ({
-  availableWords: prepareWordCards(puzzle),
-  selectedIds: new Set(),
-  solvedCategoryIds: [],
-  mistakesRemaining: DEFAULT_MISTAKES_ALLOWED,
-  status: "playing",
-  pendingSolve: null,
-});
+export const buildInitialState = (
+  puzzle: ConnectionsPuzzle,
+  persistedResult?: PuzzleResult | null,
+): GameState => {
+  if (persistedResult === "won" || persistedResult === "lost") {
+    const solvedCategoryIds = orderedCategories(puzzle.categories).map(
+      (category) => category.id,
+    );
+    return {
+      availableWords: [],
+      selectedIds: new Set(),
+      solvedCategoryIds,
+      mistakesRemaining:
+        persistedResult === "lost" ? 0 : DEFAULT_MISTAKES_ALLOWED,
+      status: persistedResult,
+      pendingSolve: null,
+    };
+  }
+
+  return {
+    availableWords: prepareWordCards(puzzle),
+    selectedIds: new Set(),
+    solvedCategoryIds: [],
+    mistakesRemaining: DEFAULT_MISTAKES_ALLOWED,
+    status: "playing",
+    pendingSolve: null,
+  };
+};
 
 export const gameReducer = (state: GameState, action: GameAction): GameState => {
   switch (action.type) {
     case "hydratePuzzle":
-      return buildInitialState(action.puzzle);
+      return buildInitialState(action.puzzle, action.persistedResult);
 
     case "toggleWord": {
       const nextSelected = new Set(state.selectedIds);
@@ -112,6 +135,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         (card) => !action.wordIds.includes(card.id),
       );
       const status =
+        state.status === "playing" &&
+        action.allowWinTransition !== false &&
         solvedCategoryIds.length === action.totalCategoryCount
           ? "won"
           : state.status;

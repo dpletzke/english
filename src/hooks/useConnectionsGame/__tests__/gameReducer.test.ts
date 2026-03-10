@@ -60,6 +60,33 @@ describe("gameReducer", () => {
     expect(next.pendingSolve).toBeNull();
   });
 
+  it("hydrates puzzle in won state when persisted as won", () => {
+    const puzzle = createPuzzle();
+    const next = gameReducer(buildInitialState(puzzle), {
+      type: "hydratePuzzle",
+      puzzle,
+      persistedResult: "won",
+    });
+
+    expect(next.status).toBe("won");
+    expect(next.availableWords).toEqual([]);
+    expect(next.solvedCategoryIds).toHaveLength(puzzle.categories.length);
+  });
+
+  it("hydrates puzzle in lost state when persisted as lost", () => {
+    const puzzle = createPuzzle();
+    const next = gameReducer(buildInitialState(puzzle), {
+      type: "hydratePuzzle",
+      puzzle,
+      persistedResult: "lost",
+    });
+
+    expect(next.status).toBe("lost");
+    expect(next.mistakesRemaining).toBe(0);
+    expect(next.availableWords).toEqual([]);
+    expect(next.solvedCategoryIds).toHaveLength(puzzle.categories.length);
+  });
+
   it("toggles word selection up to four entries", () => {
     const puzzle = createPuzzle();
     const initial = buildInitialState(puzzle);
@@ -152,6 +179,42 @@ describe("gameReducer", () => {
         expect(state.status).toBe("playing");
       }
     }
+  });
+
+  it("does not transition back to won after game is lost", () => {
+    const puzzle = createPuzzle();
+    const initial = buildInitialState(puzzle);
+    const [first] = puzzle.categories;
+    const firstWordIds = wordIdsForCategory(initial.availableWords, first.id);
+
+    let state = gameReducer(
+      buildState({ status: "lost", mistakesRemaining: 0 }),
+      {
+        type: "completeSolve",
+        categoryId: first.id,
+        wordIds: firstWordIds,
+        totalCategoryCount: 1,
+      },
+    );
+
+    expect(state.status).toBe("lost");
+  });
+
+  it("does not transition to won when win transition is disabled", () => {
+    const puzzle = createPuzzle();
+    const initial = buildInitialState(puzzle);
+    const [first] = puzzle.categories;
+    const firstWordIds = wordIdsForCategory(initial.availableWords, first.id);
+
+    const state = gameReducer(initial, {
+      type: "completeSolve",
+      categoryId: first.id,
+      wordIds: firstWordIds,
+      totalCategoryCount: 1,
+      allowWinTransition: false,
+    });
+
+    expect(state.status).toBe("playing");
   });
 
   it("clears selection", () => {
