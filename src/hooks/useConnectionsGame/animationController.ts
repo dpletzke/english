@@ -89,9 +89,19 @@ export const useAnimationController = (
   );
 
   const finalizeSolve = useCallback(
-    ({ categoryId, wordIds, totalCategoryCount }: PlaySolveAnimationArgs) => {
+    ({
+      categoryId,
+      wordIds,
+      totalCategoryCount,
+      allowWinTransition,
+    }: PlaySolveAnimationArgs) => {
       clearFeedbackForIds(wordIds);
-      onCompleteSolve({ categoryId, wordIds, totalCategoryCount });
+      onCompleteSolve({
+        categoryId,
+        wordIds,
+        totalCategoryCount,
+        allowWinTransition,
+      });
     },
     [clearFeedbackForIds, onCompleteSolve],
   );

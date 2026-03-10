@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import styled from "styled-components";
+import { Check, Minus, X } from "lucide-react";
 import { formatPuzzleDateShortLabel } from "../../data/puzzles";
+
+type DatePlayStatus = "won" | "lost" | "pending";
 
 interface DatePickerSheetProps {
   isOpen: boolean;
@@ -8,6 +11,7 @@ interface DatePickerSheetProps {
   availableDates: string[];
   selectedDateKey: string;
   onSelect: (dateKey: string) => void;
+  dateStatuses?: Partial<Record<string, DatePlayStatus>>;
   todayDateKey?: string;
   dialogId?: string;
 }
@@ -53,6 +57,7 @@ export const DatePickerSheet = ({
   availableDates,
   selectedDateKey,
   onSelect,
+  dateStatuses,
   todayDateKey,
   dialogId,
 }: DatePickerSheetProps) => {
@@ -105,6 +110,9 @@ export const DatePickerSheet = ({
     onClose();
   };
 
+  const getStatus = (dateKey: string): DatePlayStatus =>
+    dateStatuses?.[dateKey] ?? "pending";
+
   return (
     <Overlay ref={overlayRef}>
       <Backdrop onClick={onClose} aria-label="Close date picker overlay" />
@@ -131,7 +139,22 @@ export const DatePickerSheet = ({
                 onClick={() => handleSelect(displayDates.hasToday!)}
                 $selected={selectedDateKey === displayDates.hasToday}
               >
-                {formatPuzzleDateShortLabel(displayDates.hasToday)}
+                    <DateText>{formatPuzzleDateShortLabel(displayDates.hasToday)}</DateText>
+                <StatusIcon
+                  $status={getStatus(displayDates.hasToday)}
+                  role="img"
+                  aria-label={STATUS_META[getStatus(displayDates.hasToday)].ariaLabel}
+                >
+                  {getStatus(displayDates.hasToday) === "won" ? (
+                    <Check aria-hidden strokeWidth={2.6} />
+                  ) : null}
+                  {getStatus(displayDates.hasToday) === "lost" ? (
+                    <X aria-hidden strokeWidth={2.6} />
+                  ) : null}
+                  {getStatus(displayDates.hasToday) === "pending" ? (
+                    <Minus aria-hidden strokeWidth={2.6} />
+                  ) : null}
+                </StatusIcon>
               </DateButton>
             </QuickAction>
           ) : null}
@@ -145,7 +168,22 @@ export const DatePickerSheet = ({
                     onClick={() => handleSelect(dateKey)}
                     $selected={selectedDateKey === dateKey}
                   >
-                    {formatPuzzleDateShortLabel(dateKey)}
+                    <DateText>{formatPuzzleDateShortLabel(dateKey)}</DateText>
+                    <StatusIcon
+                      $status={getStatus(dateKey)}
+                      role="img"
+                      aria-label={STATUS_META[getStatus(dateKey)].ariaLabel}
+                    >
+                      {getStatus(dateKey) === "won" ? (
+                        <Check aria-hidden strokeWidth={2.6} />
+                      ) : null}
+                      {getStatus(dateKey) === "lost" ? (
+                        <X aria-hidden strokeWidth={2.6} />
+                      ) : null}
+                      {getStatus(dateKey) === "pending" ? (
+                        <Minus aria-hidden strokeWidth={2.6} />
+                      ) : null}
+                    </StatusIcon>
                   </DateButton>
                 </li>
               ))}
@@ -244,9 +282,18 @@ const EmptyState = styled.div`
   color: #5d5d5d;
 `;
 
+const STATUS_META: Record<DatePlayStatus, { color: string; ariaLabel: string }> = {
+  won: { color: "#68a663", ariaLabel: "Solved" },
+  lost: { color: "#c26b6b", ariaLabel: "Missed" },
+  pending: { color: "#b6b6b6", ariaLabel: "Not played" },
+};
+
 const DateButton = styled.button<{ $selected: boolean }>`
   width: 100%;
-  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid ${(props) => (props.$selected ? "#3f6fd1" : "#e2d5c5")};
@@ -257,5 +304,25 @@ const DateButton = styled.button<{ $selected: boolean }>`
 
   &:hover {
     border-color: #3f6fd1;
+  }
+`;
+
+const DateText = styled.span`
+  text-align: left;
+`;
+
+const StatusIcon = styled.span<{ $status: DatePlayStatus }>`
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: ${({ $status }) => STATUS_META[$status].color};
+  opacity: 0.72;
+
+  svg {
+    width: 14px;
+    height: 14px;
   }
 `;
