@@ -57,6 +57,7 @@ export const useConnectionsGame = (
     availableWords,
     selectedIds,
     solvedCategoryIds,
+    revealedCategoryIds,
     mistakesRemaining,
     status,
     pendingSolve,
@@ -75,19 +76,25 @@ export const useConnectionsGame = (
       categoryId,
       wordIds,
       totalCategoryCount,
-      allowWinTransition,
     }: {
       categoryId: string;
       wordIds: string[];
       totalCategoryCount: number;
-      allowWinTransition?: boolean;
     }) =>
       dispatch({
         type: "completeSolve",
         categoryId,
         wordIds,
         totalCategoryCount,
-        allowWinTransition,
+      }),
+    [dispatch],
+  );
+  const completeReveal = useCallback(
+    ({ categoryId, wordIds }: { categoryId: string; wordIds: string[] }) =>
+      dispatch({
+        type: "completeReveal",
+        categoryId,
+        wordIds,
       }),
     [dispatch],
   );
@@ -113,6 +120,7 @@ export const useConnectionsGame = (
     onSetWordOrder: setWordOrder,
     onMarkSolvePending: markSolvePending,
     onCompleteSolve: completeSolve,
+    onCompleteReveal: completeReveal,
     onRecordMistake: recordMistake,
   });
   const {
@@ -161,6 +169,10 @@ export const useConnectionsGame = (
     () => new Set(solvedCategoryIds),
     [solvedCategoryIds],
   );
+  const revealedSet = useMemo(
+    () => new Set(revealedCategoryIds),
+    [revealedCategoryIds],
+  );
 
   const orderedSolvedCategories = useMemo(
     () =>
@@ -175,14 +187,25 @@ export const useConnectionsGame = (
   const orderedUnsolvedCategories = useMemo(
     () =>
       orderedCategories(
-        puzzle.categories.filter((category) => !solvedSet.has(category.id)),
+        puzzle.categories.filter(
+          (category) =>
+            !solvedSet.has(category.id) && !revealedSet.has(category.id),
+        ),
       ),
-    [puzzle.categories, solvedSet],
+    [puzzle.categories, revealedSet, solvedSet],
   );
 
   const revealCategories = useMemo(
-    () => (status === "lost" ? orderedUnsolvedCategories : []),
-    [status, orderedUnsolvedCategories],
+    () =>
+      status === "lost"
+        ? revealedCategoryIds
+            .map((id) => puzzle.categories.find((category) => category.id === id))
+            .filter(
+              (category): category is CategoryDefinition =>
+                category !== undefined,
+            )
+        : [],
+    [status, puzzle.categories, revealedCategoryIds],
   );
 
   const isActionLocked = useCallback(
@@ -267,7 +290,8 @@ export const useConnectionsGame = (
       category &&
       allSameCategory &&
       targetCategoryId &&
-      !solvedSet.has(targetCategoryId)
+      !solvedSet.has(targetCategoryId) &&
+      !revealedSet.has(targetCategoryId)
     ) {
       const solvedWordIds = selectedCards.map((card) => card.id);
       playSolveAnimation({
@@ -298,7 +322,6 @@ export const useConnectionsGame = (
         onAfterMistake: () => {
           playFailRevealSequence({
             batches: failRevealBatches,
-            totalCategoryCount: puzzle.categories.length,
           });
         },
       });

@@ -14,7 +14,10 @@ export interface UseAnimationControllerOptions {
     categoryId: string;
     wordIds: string[];
     totalCategoryCount: number;
-    allowWinTransition?: boolean;
+  }) => void;
+  onCompleteReveal: (payload: {
+    categoryId: string;
+    wordIds: string[];
   }) => void;
   onRecordMistake: () => void;
 }
@@ -23,7 +26,6 @@ export interface PlaySolveAnimationArgs {
   categoryId: string;
   wordIds: string[];
   totalCategoryCount: number;
-  allowWinTransition?: boolean;
 }
 
 export interface PlayMistakeAnimationArgs {
@@ -55,7 +57,6 @@ export interface AnimationControllerResult {
   playMistakeAnimation: (args: PlayMistakeAnimationArgs) => void;
   playFailRevealSequence: (args: {
     batches: FailRevealBatch[];
-    totalCategoryCount: number;
   }) => void;
   swapWordCards: (fromWordId: string, toWordId: string) => void;
   resetAnimationState: () => void;
