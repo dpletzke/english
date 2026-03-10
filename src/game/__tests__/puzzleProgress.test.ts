@@ -1,5 +1,6 @@
 import {
   getPuzzleResult,
+  getPuzzleResultsByDateKey,
   getSolvedPuzzleDateKeys,
   hasPuzzleBeenLost,
   hasPuzzleBeenSolved,
@@ -64,5 +65,15 @@ describe("puzzleProgress", () => {
 
     expect(getSolvedPuzzleDateKeys()).toEqual([]);
     expect(hasPuzzleBeenSolved("2026-03-10")).toBe(false);
+  });
+
+  it("returns all puzzle results in one snapshot", () => {
+    markPuzzleSolved("2026-03-10");
+    markPuzzleLost("2026-03-11");
+
+    expect(getPuzzleResultsByDateKey()).toEqual({
+      "2026-03-10": "won",
+      "2026-03-11": "lost",
+    });
   });
 });

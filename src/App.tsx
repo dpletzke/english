@@ -6,7 +6,7 @@ import {
   getPuzzleDateKey,
 } from "./data/puzzles";
 import {
-  getPuzzleResult,
+  getPuzzleResultsByDateKey,
   PUZZLE_PROGRESS_UPDATED_EVENT,
 } from "./game/puzzleProgress";
 import { useConnectionsGame } from "./hooks/useConnectionsGame";
@@ -73,13 +73,12 @@ const App = () => {
     activeDateKey ?? selectedDateKey ?? manifest.latestAvailable ?? todayDateKey;
   const dateLabelShort = formatPuzzleDateShortLabel(dateLabelKey);
   const dateStatuses = useMemo<Record<string, DateStatus>>(
-    () =>
-      Object.fromEntries(
-        availableDates.map((dateKey) => {
-          const result = getPuzzleResult(dateKey);
-          return [dateKey, result ?? "pending"];
-        }),
-      ),
+    () => {
+      const resultsByDateKey = getPuzzleResultsByDateKey();
+      return Object.fromEntries(
+        availableDates.map((dateKey) => [dateKey, resultsByDateKey[dateKey] ?? "pending"]),
+      );
+    },
     [availableDates, progressRevision],
   );
 

@@ -98,6 +98,10 @@ export const getPuzzleResult = (dateKey: string): PuzzleResult | null => {
   return readSnapshot().resultsByDateKey[dateKey] ?? null;
 };
 
+export const getPuzzleResultsByDateKey = (): Record<string, PuzzleResult> => ({
+  ...readSnapshot().resultsByDateKey,
+});
+
 const markPuzzleResult = (dateKey: string, result: PuzzleResult): void => {
   if (!dateKey) {
     return;
