@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, CircleHelp, Lightbulb } from "lucide-react";
 
 interface GameHeaderProps {
   dateLabel: string;
@@ -8,31 +8,19 @@ interface GameHeaderProps {
 }
 
 const Header = styled.header`
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   width: 100%;
   max-width: 560px;
-  min-height: 60px;
+  min-height: 56px;
   padding: 8px 0;
   border-bottom: 1px solid #e3d5c5;
 `;
 
-const HeaderText = styled.div`
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-  text-align: center;
-  justify-items: center;
-`;
-
-const Prompt = styled.p`
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: #1f1f1f;
-  line-height: 1.15;
+const TopRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 `;
 
 const DateText = styled.p`
@@ -43,26 +31,26 @@ const DateText = styled.p`
   line-height: 1.2;
 `;
 
-const DateButton = styled.button`
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+const Actions = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const IconButton = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
   padding: 0;
   border-radius: 10px;
   background: transparent;
   border: none;
   cursor: pointer;
   color: #3c2a1f;
-  transition:
-    transform 100ms ease,
-    color 100ms ease;
+  transition: color 100ms ease;
 
   &:disabled {
     opacity: 0.5;
@@ -70,7 +58,6 @@ const DateButton = styled.button`
   }
 
   &:hover:not(:disabled) {
-    transform: translateY(calc(-50% - 1px));
     color: #2f1f15;
   }
 
@@ -80,21 +67,33 @@ const DateButton = styled.button`
   }
 
   @media (min-width: 768px) {
-    width: 56px;
-    height: 56px;
-    min-width: 56px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
   }
 `;
 
-const CalendarIcon = styled(CalendarDays)`
+const IconBase = `
   width: 24px;
   height: 24px;
   color: #3c2a1f;
 
   @media (min-width: 768px) {
-    width: 32px;
-    height: 32px;
+    width: 26px;
+    height: 26px;
   }
+`;
+
+const CalendarIcon = styled(CalendarDays)`
+  ${IconBase}
+`;
+
+const HintIcon = styled(Lightbulb)`
+  ${IconBase}
+`;
+
+const HelpIcon = styled(CircleHelp)`
+  ${IconBase}
 `;
 
 const GameHeader = ({
@@ -103,18 +102,25 @@ const GameHeader = ({
   disabled,
 }: GameHeaderProps) => (
   <Header>
-    <HeaderText>
-      <Prompt>Create four groups of four!</Prompt>
+    <TopRow>
       <DateText>{dateLabel}</DateText>
-    </HeaderText>
-    <DateButton
-      type="button"
-      onClick={onOpenDatePicker}
-      aria-label={`Choose puzzle date, currently ${dateLabel}`}
-      disabled={disabled}
-    >
-      <CalendarIcon aria-hidden strokeWidth={2.25} />
-    </DateButton>
+      <Actions>
+        <IconButton type="button" aria-label="Hint options coming soon">
+          <HintIcon aria-hidden strokeWidth={2.25} />
+        </IconButton>
+        <IconButton type="button" aria-label="Help options coming soon">
+          <HelpIcon aria-hidden strokeWidth={2.25} />
+        </IconButton>
+        <IconButton
+          type="button"
+          onClick={onOpenDatePicker}
+          aria-label={`Choose puzzle date, currently ${dateLabel}`}
+          disabled={disabled}
+        >
+          <CalendarIcon aria-hidden strokeWidth={2.25} />
+        </IconButton>
+      </Actions>
+    </TopRow>
   </Header>
 );
 

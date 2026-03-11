@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
+import styled from "styled-components";
 import type { ConnectionsPuzzle } from "./data/puzzles";
 import { useConnectionsGame } from "./hooks/useConnectionsGame";
 import { useDailyPuzzle } from "./hooks/useDailyPuzzle";
 import { usePuzzleManifest } from "./hooks/usePuzzleManifest";
 import { usePuzzleSelection } from "./hooks/usePuzzleSelection";
 import { GlobalStyle } from "./styles/GlobalStyle";
-import {
-  getWordMotionTracer,
-  isWordMotionTracerEnabled,
-} from "./game/tracing";
+import { getWordMotionTracer, isWordMotionTracerEnabled } from "./game/tracing";
 import {
   CategoryGroupList,
   GameControls,
@@ -33,9 +31,21 @@ declare global {
 
 const DATE_SHEET_ID = "puzzle-date-picker";
 
+const GamePrompt = styled.p`
+  margin: 0;
+  width: 100%;
+  max-width: 560px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #1f1f1f;
+`;
+
 const App = () => {
   const manifest = usePuzzleManifest();
-  const availableDates = manifest.status === "loaded" ? manifest.availableDates : [];
+  const availableDates =
+    manifest.status === "loaded" ? manifest.availableDates : [];
   const {
     todayDateKey,
     selectedDateKey,
@@ -96,8 +106,11 @@ const App = () => {
         <GameHeader
           dateLabel={dateLabelShort}
           onOpenDatePicker={openDatePicker}
-          disabled={availableDates.length === 0 || manifest.status === "loading"}
+          disabled={
+            availableDates.length === 0 || manifest.status === "loading"
+          }
         />
+        <GamePrompt>Create four groups of 4!</GamePrompt>
 
         {shouldShowManifestError ? (
           <ManifestWarningNotice onRetry={manifest.retry} />
