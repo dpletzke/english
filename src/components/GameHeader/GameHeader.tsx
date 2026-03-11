@@ -4,6 +4,7 @@ import { CalendarDays, CircleHelp, Lightbulb } from "lucide-react";
 interface GameHeaderProps {
   dateLabel: string;
   onOpenDatePicker: () => void;
+  onOpenHelp: () => void;
   disabled?: boolean;
 }
 
@@ -99,6 +100,7 @@ const HelpIcon = styled(CircleHelp)`
 const GameHeader = ({
   dateLabel,
   onOpenDatePicker,
+  onOpenHelp,
   disabled,
 }: GameHeaderProps) => (
   <Header>
@@ -108,7 +110,7 @@ const GameHeader = ({
         <IconButton type="button" aria-label="Hint options coming soon">
           <HintIcon aria-hidden strokeWidth={2.25} />
         </IconButton>
-        <IconButton type="button" aria-label="Help options coming soon">
+        <IconButton type="button" aria-label="How to play" onClick={onOpenHelp}>
           <HelpIcon aria-hidden strokeWidth={2.25} />
         </IconButton>
         <IconButton

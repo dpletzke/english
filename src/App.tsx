@@ -3,6 +3,7 @@ import styled from "styled-components";
 import type { ConnectionsPuzzle } from "./data/puzzles";
 import { useConnectionsGame } from "./hooks/useConnectionsGame";
 import { useDailyPuzzle } from "./hooks/useDailyPuzzle";
+import { useAppOverlays } from "./hooks/useAppOverlays";
 import { usePuzzleManifest } from "./hooks/usePuzzleManifest";
 import { usePuzzleSelection } from "./hooks/usePuzzleSelection";
 import { GlobalStyle } from "./styles/GlobalStyle";
@@ -12,6 +13,7 @@ import {
   GameControls,
   GameHeader,
   DatePickerSheet,
+  HelpModal,
   GameResult,
   Page,
   StatusBar,
@@ -30,6 +32,7 @@ declare global {
 }
 
 const DATE_SHEET_ID = "puzzle-date-picker";
+const HELP_MODAL_ID = "how-to-play-modal";
 
 const GamePrompt = styled.p`
   margin: 0;
@@ -50,11 +53,8 @@ const App = () => {
     todayDateKey,
     selectedDateKey,
     activeDateKey,
-    isDatePickerOpen,
     dateStatuses,
     dateLabelShort,
-    openDatePicker,
-    closeDatePicker,
     handleSelectDate,
   } = usePuzzleSelection({
     manifestStatus: manifest.status,
@@ -62,6 +62,7 @@ const App = () => {
     latestAvailable: manifest.latestAvailable,
   });
   const puzzleState = useDailyPuzzle(activeDateKey);
+  const { overlays, openOverlay, closeOverlay } = useAppOverlays();
   const [showLoadingIndicator, setShowLoadingIndicator] = useState(false);
   const noPuzzlesAvailable =
     manifest.status === "loaded" && manifest.availableDates.length === 0;
@@ -105,7 +106,8 @@ const App = () => {
       <Page>
         <GameHeader
           dateLabel={dateLabelShort}
-          onOpenDatePicker={openDatePicker}
+          onOpenDatePicker={() => openOverlay("datePicker")}
+          onOpenHelp={() => openOverlay("help")}
           disabled={
             availableDates.length === 0 || manifest.status === "loading"
           }
@@ -133,14 +135,19 @@ const App = () => {
         ) : null}
 
         <DatePickerSheet
-          isOpen={isDatePickerOpen}
-          onClose={closeDatePicker}
+          isOpen={overlays.datePicker}
+          onClose={() => closeOverlay("datePicker")}
           availableDates={availableDates}
           selectedDateKey={selectedDateKey}
           onSelect={handleSelectDate}
           dateStatuses={dateStatuses}
           todayDateKey={todayDateKey}
           dialogId={DATE_SHEET_ID}
+        />
+        <HelpModal
+          isOpen={overlays.help}
+          onClose={() => closeOverlay("help")}
+          dialogId={HELP_MODAL_ID}
         />
       </Page>
     </>

@@ -107,14 +107,12 @@ describe("usePuzzleSelection", () => {
     const { result } = renderHook(() => usePuzzleSelection(buildArgs()));
 
     act(() => {
-      result.current.openDatePicker();
       result.current.handleSelectDate("2026-03-08");
     });
 
     await waitFor(() =>
       expect(window.localStorage.getItem(STORAGE_KEY)).toBe("2026-03-08"),
     );
-    expect(result.current.isDatePickerOpen).toBe(false);
     expect(setItemSpy).toHaveBeenCalledWith(STORAGE_KEY, "2026-03-08");
   });
 });
