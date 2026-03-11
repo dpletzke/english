@@ -20,12 +20,9 @@ interface UsePuzzleSelectionResult {
   todayDateKey: string;
   selectedDateKey: string;
   activeDateKey: string | null;
-  isDatePickerOpen: boolean;
   availableDates: string[];
   dateStatuses: Record<string, DateStatus>;
   dateLabelShort: string;
-  openDatePicker: () => void;
-  closeDatePicker: () => void;
   handleSelectDate: (dateKey: string) => void;
 }
 
@@ -48,7 +45,6 @@ export const usePuzzleSelection = ({
     storedDateKey || todayDateKey,
   );
   const [activeDateKey, setActiveDateKey] = useState<string | null>(null);
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [progressRevision, setProgressRevision] = useState(0);
 
   const dateLabelKey =
@@ -65,8 +61,6 @@ export const usePuzzleSelection = ({
     );
   }, [availableDates, progressRevision]);
 
-  const openDatePicker = () => setIsDatePickerOpen(true);
-  const closeDatePicker = () => setIsDatePickerOpen(false);
   const handleSelectDate = (dateKey: string) => {
     if (!availableDates.includes(dateKey)) {
       return;
@@ -142,12 +136,9 @@ export const usePuzzleSelection = ({
     todayDateKey,
     selectedDateKey,
     activeDateKey,
-    isDatePickerOpen,
     availableDates,
     dateStatuses,
     dateLabelShort,
-    openDatePicker,
-    closeDatePicker,
     handleSelectDate,
   };
 };
