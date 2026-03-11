@@ -61,7 +61,6 @@ export const DatePickerSheet = ({
   todayDateKey,
   dialogId,
 }: DatePickerSheetProps) => {
-  const overlayRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
   const displayDates = useMemo(() => {
@@ -114,7 +113,7 @@ export const DatePickerSheet = ({
     dateStatuses?.[dateKey] ?? "pending";
 
   return (
-    <Overlay ref={overlayRef}>
+    <Overlay>
       <Backdrop onClick={onClose} aria-label="Close date picker overlay" />
       <Sheet
         ref={dialogRef}

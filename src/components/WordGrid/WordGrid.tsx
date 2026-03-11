@@ -16,7 +16,6 @@ interface WordGridProps {
   words: WordCard[];
   selectedWordIds: string[];
   onToggleWord: (wordId: string) => void;
-  onReorderWords?: (nextOrder: WordCard[]) => void;
   wordFeedback?: WordCardFeedbackMap;
   solvedCategories: CategoryDefinition[];
   disabled?: boolean;
@@ -39,11 +38,12 @@ const WordList = styled(Reorder.Group)`
   display: contents;
 `;
 
+const ignoreReorder = () => undefined;
+
 const WordGrid = ({
   words,
   selectedWordIds,
   onToggleWord,
-  onReorderWords,
   solvedCategories,
   disabled = false,
   wordFeedback,
@@ -61,12 +61,6 @@ const WordGrid = ({
     settleDeltaFor,
   } = useWordSettle(dragConfig);
 
-  const handleReorder = (order: unknown[]) => {
-    if (onReorderWords) {
-      onReorderWords(order as WordCard[]);
-    }
-  };
-
   return (
     <Grid>
       <AnimatePresence>
@@ -80,7 +74,7 @@ const WordGrid = ({
       <WordList
         axis="y"
         values={words}
-        onReorder={handleReorder}
+        onReorder={ignoreReorder}
         layoutScroll
       >
         {words.map((card) => {

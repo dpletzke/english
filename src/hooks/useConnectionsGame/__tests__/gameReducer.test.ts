@@ -55,6 +55,7 @@ describe("gameReducer", () => {
     expect(next.availableWords).toHaveLength(16);
     expect(next.selectedIds.size).toBe(0);
     expect(next.solvedCategoryIds).toEqual([]);
+    expect(next.revealedCategoryIds).toEqual([]);
     expect(next.mistakesRemaining).toBe(DEFAULT_MISTAKES_ALLOWED);
     expect(next.status).toBe("playing");
     expect(next.pendingSolve).toBeNull();
@@ -71,6 +72,7 @@ describe("gameReducer", () => {
     expect(next.status).toBe("won");
     expect(next.availableWords).toEqual([]);
     expect(next.solvedCategoryIds).toHaveLength(puzzle.categories.length);
+    expect(next.revealedCategoryIds).toEqual([]);
   });
 
   it("hydrates puzzle in lost state when persisted as lost", () => {
@@ -84,7 +86,8 @@ describe("gameReducer", () => {
     expect(next.status).toBe("lost");
     expect(next.mistakesRemaining).toBe(0);
     expect(next.availableWords).toEqual([]);
-    expect(next.solvedCategoryIds).toHaveLength(puzzle.categories.length);
+    expect(next.solvedCategoryIds).toEqual([]);
+    expect(next.revealedCategoryIds).toHaveLength(puzzle.categories.length);
   });
 
   it("toggles word selection up to four entries", () => {
@@ -133,6 +136,7 @@ describe("gameReducer", () => {
 
     expect(state.pendingSolve).toBeNull();
     expect(state.solvedCategoryIds).toEqual(["easy"]);
+    expect(state.revealedCategoryIds).toEqual([]);
     expect(state.availableWords.every((card) => card.categoryId !== "easy")).toBe(
       true,
     );
@@ -200,21 +204,84 @@ describe("gameReducer", () => {
     expect(state.status).toBe("lost");
   });
 
-  it("does not transition to won when win transition is disabled", () => {
-    const puzzle = createPuzzle();
-    const initial = buildInitialState(puzzle);
-    const [first] = puzzle.categories;
-    const firstWordIds = wordIdsForCategory(initial.availableWords, first.id);
+  it("calculates win status from solved categories only", () => {
+    const initial = buildInitialState(createPuzzle());
+    const firstIds = wordIdsForCategory(initial.availableWords, "easy");
+    const secondIds = wordIdsForCategory(initial.availableWords, "medium");
 
-    const state = gameReducer(initial, {
-      type: "completeSolve",
-      categoryId: first.id,
-      wordIds: firstWordIds,
-      totalCategoryCount: 1,
-      allowWinTransition: false,
+    let state = gameReducer(initial, {
+      type: "completeReveal",
+      categoryId: "easy",
+      wordIds: firstIds,
     });
 
     expect(state.status).toBe("playing");
+    expect(state.revealedCategoryIds).toEqual(["easy"]);
+
+    state = gameReducer(state, {
+      type: "completeSolve",
+      categoryId: "medium",
+      wordIds: secondIds,
+      totalCategoryCount: 1,
+    });
+
+    expect(state.status).toBe("won");
+    expect(state.solvedCategoryIds).toEqual(["medium"]);
+    expect(state.revealedCategoryIds).toEqual(["easy"]);
+  });
+
+  it("keeps category IDs unique when completing solve or reveal repeatedly", () => {
+    const initial = buildInitialState(createPuzzle());
+    const easyIds = wordIdsForCategory(initial.availableWords, "easy");
+
+    let state = gameReducer(initial, {
+      type: "completeSolve",
+      categoryId: "easy",
+      wordIds: easyIds,
+      totalCategoryCount: 4,
+    });
+    state = gameReducer(state, {
+      type: "completeSolve",
+      categoryId: "easy",
+      wordIds: [],
+      totalCategoryCount: 4,
+    });
+
+    expect(state.solvedCategoryIds).toEqual(["easy"]);
+
+    state = gameReducer(state, {
+      type: "completeReveal",
+      categoryId: "medium",
+      wordIds: wordIdsForCategory(initial.availableWords, "medium"),
+    });
+    state = gameReducer(state, {
+      type: "completeReveal",
+      categoryId: "medium",
+      wordIds: [],
+    });
+
+    expect(state.revealedCategoryIds).toEqual(["medium"]);
+  });
+
+  it("moves a category from solved to revealed when reveal completion is dispatched", () => {
+    const initial = buildInitialState(createPuzzle());
+    const easyIds = wordIdsForCategory(initial.availableWords, "easy");
+
+    let state = gameReducer(initial, {
+      type: "completeSolve",
+      categoryId: "easy",
+      wordIds: easyIds,
+      totalCategoryCount: 4,
+    });
+
+    state = gameReducer(state, {
+      type: "completeReveal",
+      categoryId: "easy",
+      wordIds: [],
+    });
+
+    expect(state.solvedCategoryIds).toEqual([]);
+    expect(state.revealedCategoryIds).toEqual(["easy"]);
   });
 
   it("clears selection", () => {

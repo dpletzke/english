@@ -13,6 +13,7 @@ export interface GameState {
   availableWords: WordCard[];
   selectedIds: Set<string>;
   solvedCategoryIds: string[];
+  revealedCategoryIds: string[];
   mistakesRemaining: number;
   status: GameStatus;
   pendingSolve: PendingSolve | null;
@@ -44,7 +45,12 @@ interface CompleteSolveAction {
   categoryId: string;
   wordIds: string[];
   totalCategoryCount: number;
-  allowWinTransition?: boolean;
+}
+
+interface CompleteRevealAction {
+  type: "completeReveal";
+  categoryId: string;
+  wordIds: string[];
 }
 
 interface RecordMistakeAction {
@@ -61,6 +67,7 @@ type GameAction =
   | SetWordOrderAction
   | MarkSolvePendingAction
   | CompleteSolveAction
+  | CompleteRevealAction
   | RecordMistakeAction
   | ClearSelectionAction;
 
@@ -69,13 +76,17 @@ export const buildInitialState = (
   persistedResult?: PuzzleResult | null,
 ): GameState => {
   if (persistedResult === "won" || persistedResult === "lost") {
-    const solvedCategoryIds = orderedCategories(puzzle.categories).map(
+    const orderedCategoryIds = orderedCategories(puzzle.categories).map(
       (category) => category.id,
     );
+    const solvedCategoryIds =
+      persistedResult === "won" ? orderedCategoryIds : [];
     return {
       availableWords: [],
       selectedIds: new Set(),
       solvedCategoryIds,
+      revealedCategoryIds:
+        persistedResult === "lost" ? orderedCategoryIds : [],
       mistakesRemaining:
         persistedResult === "lost" ? 0 : DEFAULT_MISTAKES_ALLOWED,
       status: persistedResult,
@@ -87,6 +98,7 @@ export const buildInitialState = (
     availableWords: prepareWordCards(puzzle),
     selectedIds: new Set(),
     solvedCategoryIds: [],
+    revealedCategoryIds: [],
     mistakesRemaining: DEFAULT_MISTAKES_ALLOWED,
     status: "playing",
     pendingSolve: null,
@@ -130,13 +142,17 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       };
 
     case "completeSolve": {
-      const solvedCategoryIds = [...state.solvedCategoryIds, action.categoryId];
+      const solvedCategoryIds = state.solvedCategoryIds.includes(action.categoryId)
+        ? state.solvedCategoryIds
+        : [...state.solvedCategoryIds, action.categoryId];
+      const revealedCategoryIds = state.revealedCategoryIds.filter(
+        (id) => id !== action.categoryId,
+      );
       const remainingWords = state.availableWords.filter(
         (card) => !action.wordIds.includes(card.id),
       );
       const status =
         state.status === "playing" &&
-        action.allowWinTransition !== false &&
         solvedCategoryIds.length === action.totalCategoryCount
           ? "won"
           : state.status;
@@ -144,7 +160,30 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         ...state,
         availableWords: remainingWords,
         solvedCategoryIds,
+        revealedCategoryIds,
+        pendingSolve: null,
         status,
+      };
+    }
+
+    case "completeReveal": {
+      const revealedCategoryIds = state.revealedCategoryIds.includes(
+        action.categoryId,
+      )
+        ? state.revealedCategoryIds
+        : [...state.revealedCategoryIds, action.categoryId];
+      const solvedCategoryIds = state.solvedCategoryIds.filter(
+        (id) => id !== action.categoryId,
+      );
+      const remainingWords = state.availableWords.filter(
+        (card) => !action.wordIds.includes(card.id),
+      );
+      return {
+        ...state,
+        availableWords: remainingWords,
+        solvedCategoryIds,
+        revealedCategoryIds,
+        status: state.status,
         pendingSolve: null,
       };
     }

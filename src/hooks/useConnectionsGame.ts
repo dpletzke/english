@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer } from "react";
 import type { CategoryDefinition, ConnectionsPuzzle } from "../data/puzzles";
 import type { GameStatus, WordCard, WordCardFeedbackMap } from "../game/types";
 import { DEFAULT_MISTAKES_ALLOWED } from "../game/constants";
 import { orderedCategories, shuffle } from "../game/utils";
 import {
   getPuzzleResult,
-  hasPuzzleBeenSolved,
   markPuzzleLost,
   markPuzzleSolved,
 } from "../game/puzzleProgress";
@@ -27,10 +26,8 @@ interface UseConnectionsGameResult {
   mistakesAllowed: number;
   mistakesRemaining: number;
   status: GameStatus;
-  hasSolvedPuzzle: boolean;
   isInteractionLocked: boolean;
   onToggleWord: (wordId: string) => void;
-  reorderWords: (nextOrder: WordCard[]) => void;
   shuffleWords: () => void;
   clearSelection: () => void;
   submitSelection: () => void;
@@ -40,23 +37,17 @@ export const useConnectionsGame = (
   puzzle: ConnectionsPuzzle,
 ): UseConnectionsGameResult => {
   const mistakesAllowed = DEFAULT_MISTAKES_ALLOWED;
-  const initialPuzzleResult = getPuzzleResult(puzzle.date);
-  const [hasSolvedPuzzle, setHasSolvedPuzzle] = useState<boolean>(() =>
-    hasPuzzleBeenSolved(puzzle.date),
-  );
   const [gameState, dispatch] = useReducer(
     gameReducer,
-    {
-      puzzle,
-      persistedResult: initialPuzzleResult,
-    },
-    ({ puzzle: initialPuzzle, persistedResult }) =>
-      buildInitialState(initialPuzzle, persistedResult),
+    puzzle,
+    (initialPuzzle) =>
+      buildInitialState(initialPuzzle, getPuzzleResult(initialPuzzle.date)),
   );
   const {
     availableWords,
     selectedIds,
     solvedCategoryIds,
+    revealedCategoryIds,
     mistakesRemaining,
     status,
     pendingSolve,
@@ -75,19 +66,25 @@ export const useConnectionsGame = (
       categoryId,
       wordIds,
       totalCategoryCount,
-      allowWinTransition,
     }: {
       categoryId: string;
       wordIds: string[];
       totalCategoryCount: number;
-      allowWinTransition?: boolean;
     }) =>
       dispatch({
         type: "completeSolve",
         categoryId,
         wordIds,
         totalCategoryCount,
-        allowWinTransition,
+      }),
+    [dispatch],
+  );
+  const completeReveal = useCallback(
+    ({ categoryId, wordIds }: { categoryId: string; wordIds: string[] }) =>
+      dispatch({
+        type: "completeReveal",
+        categoryId,
+        wordIds,
       }),
     [dispatch],
   );
@@ -104,7 +101,6 @@ export const useConnectionsGame = (
     isMistakeAnimating,
     dragState,
     shuffleWords: shuffleWithAnimation,
-    reorderWords: reorderWithAnimation,
     playSolveAnimation,
     playMistakeAnimation,
     playFailRevealSequence,
@@ -113,6 +109,7 @@ export const useConnectionsGame = (
     onSetWordOrder: setWordOrder,
     onMarkSolvePending: markSolvePending,
     onCompleteSolve: completeSolve,
+    onCompleteReveal: completeReveal,
     onRecordMistake: recordMistake,
   });
   const {
@@ -135,13 +132,11 @@ export const useConnectionsGame = (
       persistedResult: getPuzzleResult(puzzle.date),
     });
     resetAnimationState();
-    setHasSolvedPuzzle(hasPuzzleBeenSolved(puzzle.date));
   }, [puzzle, resetAnimationState]);
 
   useEffect(() => {
     if (status === "won") {
       markPuzzleSolved(puzzle.date);
-      setHasSolvedPuzzle(true);
       return;
     }
 
@@ -161,6 +156,10 @@ export const useConnectionsGame = (
     () => new Set(solvedCategoryIds),
     [solvedCategoryIds],
   );
+  const revealedSet = useMemo(
+    () => new Set(revealedCategoryIds),
+    [revealedCategoryIds],
+  );
 
   const orderedSolvedCategories = useMemo(
     () =>
@@ -175,14 +174,25 @@ export const useConnectionsGame = (
   const orderedUnsolvedCategories = useMemo(
     () =>
       orderedCategories(
-        puzzle.categories.filter((category) => !solvedSet.has(category.id)),
+        puzzle.categories.filter(
+          (category) =>
+            !solvedSet.has(category.id) && !revealedSet.has(category.id),
+        ),
       ),
-    [puzzle.categories, solvedSet],
+    [puzzle.categories, revealedSet, solvedSet],
   );
 
   const revealCategories = useMemo(
-    () => (status === "lost" ? orderedUnsolvedCategories : []),
-    [status, orderedUnsolvedCategories],
+    () =>
+      status === "lost"
+        ? revealedCategoryIds
+            .map((id) => puzzle.categories.find((category) => category.id === id))
+            .filter(
+              (category): category is CategoryDefinition =>
+                category !== undefined,
+            )
+        : [],
+    [status, puzzle.categories, revealedCategoryIds],
   );
 
   const isActionLocked = useCallback(
@@ -220,13 +230,6 @@ export const useConnectionsGame = (
       shuffleFn: shuffle,
       selectedWordIds,
     });
-  };
-
-  const reorderWords = (nextOrder: WordCard[]) => {
-    if (isActionLocked({ requireSolveIdle: true })) {
-      return;
-    }
-    reorderWithAnimation(nextOrder);
   };
 
   const clearSelection = () => {
@@ -267,7 +270,8 @@ export const useConnectionsGame = (
       category &&
       allSameCategory &&
       targetCategoryId &&
-      !solvedSet.has(targetCategoryId)
+      !solvedSet.has(targetCategoryId) &&
+      !revealedSet.has(targetCategoryId)
     ) {
       const solvedWordIds = selectedCards.map((card) => card.id);
       playSolveAnimation({
@@ -298,7 +302,6 @@ export const useConnectionsGame = (
         onAfterMistake: () => {
           playFailRevealSequence({
             batches: failRevealBatches,
-            totalCategoryCount: puzzle.categories.length,
           });
         },
       });
@@ -362,10 +365,8 @@ export const useConnectionsGame = (
     mistakesAllowed,
     mistakesRemaining,
     status,
-    hasSolvedPuzzle,
     isInteractionLocked,
     onToggleWord,
-    reorderWords,
     shuffleWords,
     clearSelection,
     submitSelection,
