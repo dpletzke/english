@@ -52,7 +52,6 @@ export interface AnimationControllerResult {
   isMistakeAnimating: boolean;
   dragState: DragControllerState;
   shuffleWords: (args: ShuffleWordsArgs) => void;
-  reorderWords: (nextOrder: WordCard[]) => void;
   playSolveAnimation: (args: PlaySolveAnimationArgs) => void;
   playMistakeAnimation: (args: PlayMistakeAnimationArgs) => void;
   playFailRevealSequence: (args: {

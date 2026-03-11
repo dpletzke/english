@@ -14,7 +14,7 @@
 
 ## Game Flow Overview
 
-1. **Puzzle Selection**: `selectPuzzleForDate` chooses the puzzle keyed to today’s date, falling back to the latest past puzzle if needed.
+1. **Puzzle Selection**: `usePuzzleSelection` derives the active date (today, selected, or latest available), and `useDailyPuzzle` loads that puzzle key.
 2. **State Management**: `useConnectionsGame` hook orchestrates shuffled word cards, selection state, solved categories, mistake tracking, and win/lose transitions.
 3. **Rendering**:
    - `App.tsx` composes the page layout and wires the hook to UI components.

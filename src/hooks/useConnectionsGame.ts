@@ -28,7 +28,6 @@ interface UseConnectionsGameResult {
   status: GameStatus;
   isInteractionLocked: boolean;
   onToggleWord: (wordId: string) => void;
-  reorderWords: (nextOrder: WordCard[]) => void;
   shuffleWords: () => void;
   clearSelection: () => void;
   submitSelection: () => void;
@@ -102,7 +101,6 @@ export const useConnectionsGame = (
     isMistakeAnimating,
     dragState,
     shuffleWords: shuffleWithAnimation,
-    reorderWords: reorderWithAnimation,
     playSolveAnimation,
     playMistakeAnimation,
     playFailRevealSequence,
@@ -232,13 +230,6 @@ export const useConnectionsGame = (
       shuffleFn: shuffle,
       selectedWordIds,
     });
-  };
-
-  const reorderWords = (nextOrder: WordCard[]) => {
-    if (isActionLocked({ requireSolveIdle: true })) {
-      return;
-    }
-    reorderWithAnimation(nextOrder);
   };
 
   const clearSelection = () => {
@@ -376,7 +367,6 @@ export const useConnectionsGame = (
     status,
     isInteractionLocked,
     onToggleWord,
-    reorderWords,
     shuffleWords,
     clearSelection,
     submitSelection,

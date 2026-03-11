@@ -1,7 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConnectionsPuzzle } from "../../data/puzzles";
-import type { WordCard } from "../../game/types";
 import type { UseAnimationControllerOptions } from "../useConnectionsGame/animationTypes";
 import { useConnectionsGame } from "../useConnectionsGame";
 import * as puzzleProgress from "../../game/puzzleProgress";
@@ -32,9 +31,6 @@ const mockAnimationControllerResult = {
     clearLayoutLockedWord: vi.fn(),
   },
   shuffleWords: vi.fn(),
-  reorderWords: (nextOrder: WordCard[]) => {
-    latestAnimationOptions?.onSetWordOrder(nextOrder);
-  },
   playSolveAnimation: ({
     categoryId,
     wordIds,

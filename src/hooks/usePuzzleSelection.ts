@@ -73,7 +73,6 @@ export const usePuzzleSelection = ({
     }
     setSelectedDateKey(dateKey);
     setActiveDateKey(dateKey);
-    closeDatePicker();
   };
 
   useEffect(() => {

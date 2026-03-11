@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState } from "react";
-import type { WordCard } from "../../game/types";
 import {
   type AnimationControllerResult,
   type PlayMistakeAnimationArgs,
@@ -141,13 +140,6 @@ export const useAnimationController = (
     [availableWords, clearFeedbackForIds, onSetWordOrder],
   );
 
-  const reorderWords = useCallback(
-    (nextOrder: WordCard[]) => {
-      onSetWordOrder(nextOrder);
-    },
-    [onSetWordOrder],
-  );
-
   const playSolveAnimation = useSolveAnimator({
     availableWords,
     clearRevealTimeout,
@@ -218,7 +210,6 @@ export const useAnimationController = (
     isMistakeAnimating,
     dragState,
     shuffleWords,
-    reorderWords,
     playSolveAnimation,
     playMistakeAnimation,
     playFailRevealSequence,
