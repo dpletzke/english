@@ -3,6 +3,7 @@ import {
   formatPuzzleDateShortLabel,
   getPuzzleDateKey,
 } from "../data/puzzles";
+import { getE2ERuntimeConfig } from "../game/e2eRuntime";
 import {
   getPuzzleResultsByDateKey,
   PUZZLE_PROGRESS_UPDATED_EVENT,
@@ -33,14 +34,25 @@ export const usePuzzleSelection = ({
   availableDates,
   latestAvailable,
 }: UsePuzzleSelectionArgs): UsePuzzleSelectionResult => {
-  const todayDateKey = useMemo(() => getPuzzleDateKey(new Date()), []);
+  const dateOverrideKey = useMemo(
+    () => getE2ERuntimeConfig().dateOverrideKey,
+    [],
+  );
+  const todayDateKey = useMemo(
+    () => dateOverrideKey ?? getPuzzleDateKey(new Date()),
+    [dateOverrideKey],
+  );
   const storedDateKey = useMemo(() => {
     if (typeof window === "undefined") {
       return null;
     }
 
+    if (dateOverrideKey) {
+      return dateOverrideKey;
+    }
+
     return window.localStorage.getItem(SELECTED_PUZZLE_DATE_STORAGE_KEY);
-  }, []);
+  }, [dateOverrideKey]);
   const [selectedDateKey, setSelectedDateKey] = useState<string>(
     storedDateKey || todayDateKey,
   );
@@ -74,16 +86,32 @@ export const usePuzzleSelection = ({
       return;
     }
 
+    if (dateOverrideKey) {
+      return;
+    }
+
     window.localStorage.setItem(
       SELECTED_PUZZLE_DATE_STORAGE_KEY,
       selectedDateKey,
     );
-  }, [selectedDateKey]);
+  }, [dateOverrideKey, selectedDateKey]);
 
   useEffect(() => {
     if (manifestStatus === "loaded") {
       if (!latestAvailable) {
         setActiveDateKey(null);
+        return;
+      }
+
+      if (dateOverrideKey) {
+        const nextDateKey = availableDates.includes(dateOverrideKey)
+          ? dateOverrideKey
+          : latestAvailable;
+
+        setActiveDateKey(nextDateKey);
+        if (nextDateKey !== selectedDateKey) {
+          setSelectedDateKey(nextDateKey);
+        }
         return;
       }
 
@@ -112,6 +140,7 @@ export const usePuzzleSelection = ({
     latestAvailable,
     selectedDateKey,
     todayDateKey,
+    dateOverrideKey,
   ]);
 
   useEffect(() => {

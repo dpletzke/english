@@ -18,6 +18,7 @@ const config: ViteWithVitestConfig = {
     globals: true,
     environment: "jsdom",
     setupFiles: "./src/test/setupTests.ts",
+    exclude: [...configDefaults.exclude, "e2e/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],
