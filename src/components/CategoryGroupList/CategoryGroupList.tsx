@@ -53,7 +53,13 @@ const CategoryGroupList = ({
 }: CategoryGroupListProps) => (
   <Container>
     {categories.map((category) => (
-      <GroupCard key={category.id} $color={category.color} $revealed={revealed}>
+      <GroupCard
+        key={category.id}
+        $color={category.color}
+        $revealed={revealed}
+        data-testid={revealed ? "revealed-category-group" : "solved-category-group"}
+        data-category-id={category.id}
+      >
         <GroupTitle>{category.title}</GroupTitle>
         <GroupWords>
           {category.words.map((word) => (

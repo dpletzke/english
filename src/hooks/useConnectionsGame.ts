@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useReducer } from "react";
 import type { CategoryDefinition, ConnectionsPuzzle } from "../data/puzzles";
 import type { GameStatus, WordCard, WordCardFeedbackMap } from "../game/types";
 import { DEFAULT_MISTAKES_ALLOWED } from "../game/constants";
+import { getE2ESeededRandom } from "../game/e2eRuntime";
 import { orderedCategories, shuffle } from "../game/utils";
 import {
   getPuzzleResult,
@@ -226,8 +227,9 @@ export const useConnectionsGame = (
     if (isActionLocked()) {
       return;
     }
+    const runtimeRandom = getE2ESeededRandom();
     shuffleWithAnimation({
-      shuffleFn: shuffle,
+      shuffleFn: (words) => shuffle(words, runtimeRandom ?? Math.random),
       selectedWordIds,
     });
   };
