@@ -6,15 +6,22 @@ import { usePuzzleSelection } from "../usePuzzleSelection";
 
 const STORAGE_KEY = "selectedPuzzleDate";
 
+const dateKeyFromNow = (offsetDays: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() + offsetDays);
+  return getPuzzleDateKey(date);
+};
+
 const buildArgs = (overrides?: Partial<Parameters<typeof usePuzzleSelection>[0]>) => ({
   manifestStatus: "loaded" as const,
-  availableDates: ["2026-03-10", "2026-03-09", "2026-03-08"],
-  latestAvailable: "2026-03-10",
+  availableDates: [dateKeyFromNow(0), dateKeyFromNow(-1), dateKeyFromNow(-2)],
+  latestAvailable: dateKeyFromNow(0),
   ...overrides,
 });
 
 describe("usePuzzleSelection", () => {
   beforeEach(() => {
+    window.history.replaceState(null, "", "/");
     window.localStorage.clear();
     vi.spyOn(puzzleProgress, "getPuzzleResultsByDateKey").mockReturnValue({});
   });
@@ -25,12 +32,12 @@ describe("usePuzzleSelection", () => {
 
   it("initializes selected date from storage or falls back to today", () => {
     const todayDateKey = getPuzzleDateKey(new Date());
-    window.localStorage.setItem(STORAGE_KEY, "2026-03-09");
+    window.localStorage.setItem(STORAGE_KEY, dateKeyFromNow(-1));
 
     const { result, unmount } = renderHook(() => usePuzzleSelection(buildArgs()));
 
-    expect(result.current.selectedDateKey).toBe("2026-03-09");
-    expect(result.current.activeDateKey).toBe("2026-03-09");
+    expect(result.current.selectedDateKey).toBe(dateKeyFromNow(-1));
+    expect(result.current.activeDateKey).toBe(dateKeyFromNow(-1));
 
     unmount();
     window.localStorage.clear();
@@ -44,29 +51,29 @@ describe("usePuzzleSelection", () => {
 
   it("applies manifest fallback order: selected, then today, then latest", async () => {
     const todayDateKey = getPuzzleDateKey(new Date());
-    window.localStorage.setItem(STORAGE_KEY, "2026-03-09");
+    window.localStorage.setItem(STORAGE_KEY, dateKeyFromNow(-1));
     const { result, rerender } = renderHook(
       ({ args }) => usePuzzleSelection(args),
       { initialProps: { args: buildArgs() } },
     );
 
-    expect(result.current.activeDateKey).toBe("2026-03-09");
+    expect(result.current.activeDateKey).toBe(dateKeyFromNow(-1));
 
     rerender({
       args: buildArgs({
-        availableDates: [todayDateKey, "2026-03-08"],
+        availableDates: [todayDateKey, dateKeyFromNow(-2)],
       }),
     });
     await waitFor(() => expect(result.current.activeDateKey).toBe(todayDateKey));
 
     rerender({
       args: buildArgs({
-        availableDates: ["2026-03-08"],
-        latestAvailable: "2026-03-08",
+        availableDates: [dateKeyFromNow(-2)],
+        latestAvailable: dateKeyFromNow(-2),
       }),
     });
-    await waitFor(() => expect(result.current.activeDateKey).toBe("2026-03-08"));
-    expect(result.current.selectedDateKey).toBe("2026-03-08");
+    await waitFor(() => expect(result.current.activeDateKey).toBe(dateKeyFromNow(-2)));
+    expect(result.current.selectedDateKey).toBe(dateKeyFromNow(-2));
   });
 
   it("ignores handleSelectDate calls for unavailable dates", () => {
@@ -82,6 +89,7 @@ describe("usePuzzleSelection", () => {
   });
 
   it("recomputes dateStatuses when progress update event fires", async () => {
+    const todayDateKey = getPuzzleDateKey(new Date());
     let results: Record<string, puzzleProgress.PuzzleResult> = {};
     const getResultsSpy = vi
       .spyOn(puzzleProgress, "getPuzzleResultsByDateKey")
@@ -89,15 +97,15 @@ describe("usePuzzleSelection", () => {
 
     const { result } = renderHook(() => usePuzzleSelection(buildArgs()));
 
-    expect(result.current.dateStatuses["2026-03-10"]).toBe("pending");
+    expect(result.current.dateStatuses[todayDateKey]).toBe("pending");
 
-    results = { "2026-03-10": "won" };
+    results = { [todayDateKey]: "won" };
     act(() => {
       window.dispatchEvent(new Event(puzzleProgress.PUZZLE_PROGRESS_UPDATED_EVENT));
     });
 
     await waitFor(() =>
-      expect(result.current.dateStatuses["2026-03-10"]).toBe("won"),
+      expect(result.current.dateStatuses[todayDateKey]).toBe("won"),
     );
     expect(getResultsSpy).toHaveBeenCalled();
   });
@@ -107,12 +115,12 @@ describe("usePuzzleSelection", () => {
     const { result } = renderHook(() => usePuzzleSelection(buildArgs()));
 
     act(() => {
-      result.current.handleSelectDate("2026-03-08");
+      result.current.handleSelectDate(dateKeyFromNow(-2));
     });
 
     await waitFor(() =>
-      expect(window.localStorage.getItem(STORAGE_KEY)).toBe("2026-03-08"),
+      expect(window.localStorage.getItem(STORAGE_KEY)).toBe(dateKeyFromNow(-2)),
     );
-    expect(setItemSpy).toHaveBeenCalledWith(STORAGE_KEY, "2026-03-08");
+    expect(setItemSpy).toHaveBeenCalledWith(STORAGE_KEY, dateKeyFromNow(-2));
   });
 });
