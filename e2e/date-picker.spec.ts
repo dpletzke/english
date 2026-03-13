@@ -1,8 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { gotoGame } from "./helpers";
+import { clearStorageOnNextNavigation, gotoGame } from "./helpers";
 
-test("switches puzzle date from the date picker", async ({ page }) => {
-  await gotoGame(page, "e2eSeed=connections-seed&e2eNoMotion=1&e2eLocal=1");
+test.beforeEach(async ({ page }) => {
+  await clearStorageOnNextNavigation(page);
+});
+
+test("@core switches puzzle date from the date picker", async ({ page }) => {
+  await gotoGame(page, { date: null });
 
   await expect(page.getByRole("button", { name: /^SCORE$/ })).toBeVisible();
   await page.getByRole("button", { name: /choose puzzle date/i }).click();
