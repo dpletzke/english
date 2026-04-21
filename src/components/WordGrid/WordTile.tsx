@@ -14,11 +14,14 @@ import type { CardFeedbackAnimation } from "./animations";
 import { useTileDrag } from "../../hooks/wordGrid";
 
 const getLengthCategory = (label: string): "short" | "medium" | "long" => {
-  const condensedLength = label.replace(/\s+/g, "").length;
-  if (condensedLength >= 11) {
+  const words = label.trim().split(/\s+/).filter(Boolean);
+  const condensedLength = words.join("").length;
+  const longestWordLength = Math.max(0, ...words.map((word) => word.length));
+
+  if (longestWordLength >= 10 || condensedLength >= 13) {
     return "long";
   }
-  if (condensedLength >= 7) {
+  if (longestWordLength >= 7 || condensedLength >= 9) {
     return "medium";
   }
   return "short";
@@ -36,6 +39,7 @@ const WordItem = styled(Reorder.Item)<{
   position: relative;
   width: 100%;
   height: 100%;
+  container-type: inline-size;
   display: flex;
   align-items: stretch;
   justify-content: stretch;

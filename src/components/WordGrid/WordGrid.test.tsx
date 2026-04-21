@@ -82,6 +82,28 @@ describe("WordGrid", () => {
     });
   });
 
+  it("keeps phrase tiles from breaking inside words", () => {
+    renderWithProviders(
+      <WordGrid
+        words={[
+          buildWordCard({ id: "phrase-0", label: "Get Dressed" }),
+          buildWordCard({ id: "phrase-1", label: "Brush Teeth" }),
+          buildWordCard({ id: "phrase-2", label: "Black River" }),
+          buildWordCard({ id: "phrase-3", label: "Turn On" }),
+        ]}
+        selectedWordIds={[]}
+        onToggleWord={vi.fn()}
+        solvedCategories={[]}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Get Dressed" })).toHaveStyle(`
+      word-break: normal;
+      overflow-wrap: normal;
+      hyphens: none;
+    `);
+  });
+
   it("marks the dragging tile when drag configuration is provided", () => {
     const dragConfig: WordGridDragConfig = {
       draggingWordId: "alpha-0",
