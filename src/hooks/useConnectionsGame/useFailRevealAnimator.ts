@@ -1,13 +1,14 @@
 import { useCallback } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 import type { WordCard } from "../../game/types";
+import { isE2ENoMotionEnabled } from "../../game/e2eRuntime";
 import type { PendingSolve } from "./gameReducer";
 import { scheduleManagedTimeout } from "./timeouts";
 import { reorderWordsWithSolvedFirst } from "./wordOrdering";
 import type { FailRevealBatch } from "./animationTypes";
 
-const FAIL_REVEAL_REORDER_DELAY_MS = 600;
-const FAIL_REVEAL_NEXT_BATCH_DELAY_MS = 200;
+const FAIL_REVEAL_REORDER_DELAY_MS = isE2ENoMotionEnabled() ? 0 : 600;
+const FAIL_REVEAL_NEXT_BATCH_DELAY_MS = isE2ENoMotionEnabled() ? 0 : 200;
 
 interface UseFailRevealAnimatorArgs {
   availableWords: WordCard[];

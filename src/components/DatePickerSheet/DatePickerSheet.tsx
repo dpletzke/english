@@ -137,6 +137,7 @@ export const DatePickerSheet = ({
                 type="button"
                 onClick={() => handleSelect(displayDates.hasToday!)}
                 $selected={selectedDateKey === displayDates.hasToday}
+                data-date-key={displayDates.hasToday}
               >
                     <DateText>{formatPuzzleDateShortLabel(displayDates.hasToday)}</DateText>
                 <StatusIcon
@@ -166,6 +167,7 @@ export const DatePickerSheet = ({
                     type="button"
                     onClick={() => handleSelect(dateKey)}
                     $selected={selectedDateKey === dateKey}
+                    data-date-key={dateKey}
                   >
                     <DateText>{formatPuzzleDateShortLabel(dateKey)}</DateText>
                     <StatusIcon

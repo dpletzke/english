@@ -10,14 +10,20 @@ English Learning Connections is a Connections-style vocabulary puzzler that help
 
 ## Getting Started
 ```bash
+nvm use
 npm install
 npm run dev
 ```
+
+### Runtime pinning
+- Node version is pinned in `.nvmrc` (`v23.8.0`).
+- `package.json` `engines` declares supported Node/npm ranges for local and CI consistency.
 
 ### Quality checks
 - `npm run build` – type check + production bundle
 - `npm run test` / `npm run test:watch` – Vitest suite with @testing-library
 - `npm run lint` and `npm run format` – code style enforcement
+- E2E determinism preconditions are documented in `docs/e2e-determinism.md`.
 
 ## Project Structure
 ```

@@ -1,5 +1,6 @@
 import type { Transition } from "framer-motion";
 import type { WordCardFeedbackStatus } from "../../game/types";
+import { isE2ENoMotionEnabled } from "../../game/e2eRuntime";
 
 export type CardFeedbackAnimation = {
   animate: {
@@ -10,18 +11,20 @@ export type CardFeedbackAnimation = {
   transition: Transition;
 };
 
+const noMotion = isE2ENoMotionEnabled();
+
 const hopKeyframes: number[] = [0, -18, 0];
 const hopTransition: Transition = {
-  duration: 0.24,
+  duration: noMotion ? 0 : 0.24,
   ease: [0.33, 1, 0.68, 1],
   times: [0, 0.5, 1],
 };
 
-const idleTransition: Transition = { duration: 0.18 };
+const idleTransition: Transition = { duration: noMotion ? 0 : 0.18 };
 
 const shakeKeyframes: number[] = [0, -21, 21, -14, 14, -7, 7, 0];
 const shakeTransition: Transition = {
-  duration: 0.22,
+  duration: noMotion ? 0 : 0.22,
   ease: "easeInOut",
   times: [0, 0.18, 0.36, 0.54, 0.72, 0.86, 0.93, 1],
 };

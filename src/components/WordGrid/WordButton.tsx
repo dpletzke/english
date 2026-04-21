@@ -5,15 +5,21 @@ type LengthCategory = "short" | "medium" | "long";
 type WordLayoutCategory = "single" | "double";
 
 const FONT_SIZE_BY_LENGTH: Record<LengthCategory, string> = {
-  long: "clamp(10px, 1.6vh, 14px)",
-  medium: "clamp(11px, 1.85vh, 15px)",
-  short: "clamp(12px, 2.2vh, 17px)",
+  long: "clamp(9px, 10.8cqi, 13px)",
+  medium: "clamp(11px, 13.2cqi, 15px)",
+  short: "clamp(12px, 15.5cqi, 17px)",
 };
 
-const LETTER_SPACING_BY_LENGTH: Record<LengthCategory, string> = {
-  long: "0.18px",
-  medium: "0.32px",
-  short: "0.32px",
+const DOUBLE_FONT_SIZE_BY_LENGTH: Record<LengthCategory, string> = {
+  long: "clamp(9px, 12cqi, 13px)",
+  medium: "clamp(11px, 15cqi, 14px)",
+  short: "clamp(12px, 16cqi, 16px)",
+};
+
+const PADDING_INLINE_BY_LENGTH: Record<LengthCategory, string> = {
+  long: "clamp(4px, 4cqi, 8px)",
+  medium: "clamp(5px, 5cqi, 10px)",
+  short: "clamp(8px, 7cqi, 14px)",
 };
 
 const BUTTON_PALETTE = {
@@ -38,7 +44,7 @@ const getButtonFontSize = (
   length: LengthCategory,
 ) =>
   layout === "double"
-    ? "clamp(11px, 1.9vh, 16px)"
+    ? DOUBLE_FONT_SIZE_BY_LENGTH[length]
     : FONT_SIZE_BY_LENGTH[length];
 
 const SINGLE_LAYOUT_STYLES = css`
@@ -54,9 +60,10 @@ const DOUBLE_LAYOUT_STYLES = css`
   line-height: 1.15;
   white-space: normal;
   flex-wrap: wrap;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  hyphens: auto;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  text-wrap: balance;
 `;
 
 const applyLayoutStyles = ($layout: WordLayoutCategory) =>
@@ -98,7 +105,7 @@ export const WordButton = styled(motion.button)<WordButtonStyleProps>`
   text-align: center;
   font-weight: 700;
   font-size: ${({ $layout, $length }) => getButtonFontSize($layout, $length)};
-  letter-spacing: ${({ $length }) => LETTER_SPACING_BY_LENGTH[$length]};
+  letter-spacing: 0;
   cursor: default;
   text-transform: uppercase;
   transition:
@@ -106,7 +113,7 @@ export const WordButton = styled(motion.button)<WordButtonStyleProps>`
     box-shadow 120ms ease,
     border-color 120ms ease;
   padding-block: clamp(7px, 1.6vh, 12px);
-  padding-inline: clamp(12px, 2.6vw, 22px);
+  padding-inline: ${({ $length }) => PADDING_INLINE_BY_LENGTH[$length]};
   ${({ $layout }) => applyLayoutStyles($layout)}
 
   &:disabled {

@@ -7,6 +7,7 @@ import { useAppOverlays } from "./hooks/useAppOverlays";
 import { usePuzzleManifest } from "./hooks/usePuzzleManifest";
 import { usePuzzleSelection } from "./hooks/usePuzzleSelection";
 import { GlobalStyle } from "./styles/GlobalStyle";
+import { isE2ENoMotionEnabled } from "./game/e2eRuntime";
 import { getWordMotionTracer, isWordMotionTracerEnabled } from "./game/tracing";
 import {
   CategoryGroupList,
@@ -88,6 +89,23 @@ const App = () => {
       window.clearTimeout(timeout);
     };
   }, [shouldShowLoading]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const htmlElement = document.documentElement;
+    if (isE2ENoMotionEnabled()) {
+      htmlElement.dataset.e2eNoMotion = "1";
+    } else {
+      delete htmlElement.dataset.e2eNoMotion;
+    }
+
+    return () => {
+      delete htmlElement.dataset.e2eNoMotion;
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined" && isWordMotionTracerEnabled()) {

@@ -7,17 +7,21 @@ import {
 import { Reorder, useMotionValue, animate } from "framer-motion";
 import styled, { css } from "styled-components";
 import type { WordCard } from "../../game/types";
+import { isE2ENoMotionEnabled } from "../../game/e2eRuntime";
 import type { DragSettleDelta, DragSettleSnapshot } from "./WordGrid.types";
 import { WordButton } from "./WordButton";
 import type { CardFeedbackAnimation } from "./animations";
 import { useTileDrag } from "../../hooks/wordGrid";
 
 const getLengthCategory = (label: string): "short" | "medium" | "long" => {
-  const condensedLength = label.replace(/\s+/g, "").length;
-  if (condensedLength >= 11) {
+  const words = label.trim().split(/\s+/).filter(Boolean);
+  const condensedLength = words.join("").length;
+  const longestWordLength = Math.max(0, ...words.map((word) => word.length));
+
+  if (longestWordLength >= 10 || condensedLength >= 13) {
     return "long";
   }
-  if (condensedLength >= 7) {
+  if (longestWordLength >= 7 || condensedLength >= 9) {
     return "medium";
   }
   return "short";
@@ -35,6 +39,7 @@ const WordItem = styled(Reorder.Item)<{
   position: relative;
   width: 100%;
   height: 100%;
+  container-type: inline-size;
   display: flex;
   align-items: stretch;
   justify-content: stretch;
@@ -92,6 +97,7 @@ export const WordTile = ({
   onSettleDeltaConsumed,
   isLayoutLocked,
 }: WordTileProps) => {
+  const noMotion = isE2ENoMotionEnabled();
   const {
     itemRef,
     dragControls,
@@ -129,6 +135,12 @@ export const WordTile = ({
     if (isDragging) {
       return;
     }
+    if (noMotion) {
+      settleX.set(0);
+      settleY.set(0);
+      onSettleDeltaConsumed();
+      return;
+    }
     activeAnimationXRef.current?.stop();
     activeAnimationYRef.current?.stop();
     activeAnimationXRef.current = null;
@@ -159,6 +171,7 @@ export const WordTile = ({
     settleDelta,
     settleX,
     settleY,
+    noMotion,
   ]);
 
   useEffect(() => {
@@ -199,13 +212,15 @@ export const WordTile = ({
     <WordItem
       ref={itemRef}
       data-word-id={card.id}
+      data-testid="word-grid-tile"
+      data-word-label={card.label}
       value={card}
       {...layoutProps}
       animate={{ opacity: 1, scale: 1 }}
       transition={{
-        layout: { duration: 0.4, ease: "easeInOut" },
-        opacity: { duration: 0.18 },
-        scale: { duration: 0.18 },
+        layout: { duration: noMotion ? 0 : 0.4, ease: "easeInOut" },
+        opacity: { duration: noMotion ? 0 : 0.18 },
+        scale: { duration: noMotion ? 0 : 0.18 },
       }}
       drag
       dragControls={dragControls}

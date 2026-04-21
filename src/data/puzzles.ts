@@ -1,4 +1,5 @@
 import localPuzzlesJson from "./puzzles.json" assert { type: "json" };
+import { isE2ELocalDataEnabled } from "../game/e2eRuntime";
 
 export type CategoryColor = "yellow" | "green" | "blue" | "purple";
 
@@ -78,6 +79,10 @@ const normalizeManifestPayload = (payload: unknown): string[] => {
 };
 
 const requestManifest = async (): Promise<string[]> => {
+  if (import.meta.env.MODE !== "production" && isE2ELocalDataEnabled()) {
+    return sortDateKeysDescending(normalizeManifestPayload(localManifestPayload));
+  }
+
   const baseUrl = getPuzzlesBaseUrl();
   const manifestPaths = ["manifest.json", "puzzles/manifest.json"];
   let lastError: Error | undefined;
@@ -142,6 +147,13 @@ const selectFallbackPuzzle = (
 const puzzleRequestCache = new Map<string, Promise<ConnectionsPuzzle>>();
 
 const requestPuzzle = async (dateKey: string): Promise<ConnectionsPuzzle> => {
+  if (import.meta.env.MODE !== "production" && isE2ELocalDataEnabled()) {
+    const localPuzzle = selectFallbackPuzzle(dateKey);
+    if (localPuzzle) {
+      return { ...localPuzzle, date: localPuzzle.date ?? dateKey };
+    }
+  }
+
   try {
     const baseUrl = getPuzzlesBaseUrl();
     const response = await fetch(`${baseUrl}/puzzles/${dateKey}.json`);

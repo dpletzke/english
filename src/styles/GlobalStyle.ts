@@ -21,4 +21,13 @@ export const GlobalStyle = createGlobalStyle`
   #root {
     min-height: 100vh;
   }
+
+  html[data-e2e-no-motion="1"] *,
+  html[data-e2e-no-motion="1"] *::before,
+  html[data-e2e-no-motion="1"] *::after {
+    animation: none !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
 `;
