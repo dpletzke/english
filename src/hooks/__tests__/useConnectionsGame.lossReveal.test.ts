@@ -204,4 +204,43 @@ describe("useConnectionsGame loss/reveal flow", () => {
       "purple-1",
     ]);
   });
+
+  it("ignores selecting a word whose solve animation is still pending", () => {
+    const pendingSolve = vi
+      .spyOn(mockAnimationControllerResult, "playSolveAnimation")
+      .mockImplementation(({ categoryId, wordIds }) => {
+        latestAnimationOptions?.onMarkSolvePending({ categoryId, wordIds });
+      });
+
+    const { result } = renderHook(() => useConnectionsGame(testPuzzle));
+    const yellowIds = getWordIdsForCategory(testPuzzle, "yellow-1");
+
+    act(() => {
+      yellowIds.forEach((id) => result.current.onToggleWord(id));
+    });
+    act(() => {
+      result.current.submitSelection();
+    });
+    act(() => {
+      result.current.onToggleWord(yellowIds[0]);
+    });
+
+    expect(result.current.selectedWordIds).toEqual([]);
+
+    // Finishing the solve must not leave solved ids behind either.
+    act(() => {
+      latestAnimationOptions?.onCompleteSolve({
+        categoryId: "yellow-1",
+        wordIds: yellowIds,
+        totalCategoryCount: 4,
+      });
+    });
+    const greenIds = getWordIdsForCategory(testPuzzle, "green-1");
+    act(() => {
+      greenIds.forEach((id) => result.current.onToggleWord(id));
+    });
+    expect(result.current.selectedWordIds).toEqual(greenIds);
+
+    pendingSolve.mockRestore();
+  });
 });

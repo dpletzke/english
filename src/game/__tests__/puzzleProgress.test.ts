@@ -76,4 +76,37 @@ describe("puzzleProgress", () => {
       "2026-03-11": "lost",
     });
   });
+
+  describe("when browser storage throws", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("reads as empty when getItem throws", () => {
+      vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+        throw new DOMException("blocked", "SecurityError");
+      });
+
+      expect(getPuzzleResult("2026-03-10")).toBeNull();
+      expect(getPuzzleResultsByDateKey()).toEqual({});
+    });
+
+    it("does not throw when setItem exceeds quota", () => {
+      vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+        throw new DOMException("full", "QuotaExceededError");
+      });
+
+      expect(() => markPuzzleSolved("2026-03-10")).not.toThrow();
+      expect(() => markPuzzleLost("2026-03-11")).not.toThrow();
+    });
+
+    it("does not throw when accessing window.localStorage throws", () => {
+      vi.spyOn(window, "localStorage", "get").mockImplementation(() => {
+        throw new DOMException("denied", "SecurityError");
+      });
+
+      expect(() => markPuzzleSolved("2026-03-10")).not.toThrow();
+      expect(getPuzzleResult("2026-03-10")).toBeNull();
+    });
+  });
 });

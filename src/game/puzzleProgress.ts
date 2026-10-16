@@ -7,8 +7,18 @@ interface PuzzleProgressSnapshot {
   resultsByDateKey: Record<string, PuzzleResult>;
 }
 
-const isBrowser = () =>
-  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+// Accessing localStorage can throw (blocked storage, privacy modes), so treat
+// any failure as "no persistence available" and let the game play on.
+const getStorage = (): Storage | null => {
+  try {
+    if (typeof window === "undefined" || !window.localStorage) {
+      return null;
+    }
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+};
 
 const normalizeResultsByDateKey = (
   input: unknown,
@@ -35,16 +45,16 @@ const normalizeDateKeys = (dateKeys: unknown): string[] => {
 };
 
 const readSnapshot = (): PuzzleProgressSnapshot => {
-  if (!isBrowser()) {
-    return { resultsByDateKey: {} };
-  }
-
-  const raw = window.localStorage.getItem(PUZZLE_PROGRESS_STORAGE_KEY);
-  if (!raw) {
+  const storage = getStorage();
+  if (!storage) {
     return { resultsByDateKey: {} };
   }
 
   try {
+    const raw = storage.getItem(PUZZLE_PROGRESS_STORAGE_KEY);
+    if (!raw) {
+      return { resultsByDateKey: {} };
+    }
     const parsed = JSON.parse(raw) as {
       solvedDateKeys?: unknown;
       resultsByDateKey?: unknown;
@@ -66,14 +76,17 @@ const readSnapshot = (): PuzzleProgressSnapshot => {
 };
 
 const writeSnapshot = (snapshot: PuzzleProgressSnapshot): void => {
-  if (!isBrowser()) {
+  const storage = getStorage();
+  if (!storage) {
     return;
   }
 
-  window.localStorage.setItem(
-    PUZZLE_PROGRESS_STORAGE_KEY,
-    JSON.stringify(snapshot),
-  );
+  try {
+    storage.setItem(PUZZLE_PROGRESS_STORAGE_KEY, JSON.stringify(snapshot));
+  } catch {
+    // Quota exceeded or storage blocked: skip persistence, keep playing.
+    return;
+  }
   window.dispatchEvent(new Event(PUZZLE_PROGRESS_UPDATED_EVENT));
 };
 

@@ -171,8 +171,9 @@ export const useTileDrag = ({
       }
       const pointerEvent = event.nativeEvent;
       if (pointerEvent.pointerType === "touch") {
-        pendingPointerEventRef.current = pointerEvent;
+        // Clear first: clearLongPressTimer also nulls the pending event.
         clearLongPressTimer();
+        pendingPointerEventRef.current = pointerEvent;
         longPressTimeoutRef.current = window.setTimeout(() => {
           const pendingEvent = pendingPointerEventRef.current;
           if (pendingEvent) {
