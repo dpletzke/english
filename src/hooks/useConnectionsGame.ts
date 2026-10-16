@@ -218,6 +218,11 @@ export const useConnectionsGame = (
     if (isActionLocked()) {
       return;
     }
+    // Words in a pending solve are about to leave the grid; selecting one
+    // would leave an invisible ID occupying a selection slot.
+    if (pendingSolve?.wordIds.includes(wordId)) {
+      return;
+    }
 
     clearFeedbackForIds([wordId]);
     dispatch({ type: "toggleWord", wordId });
@@ -315,20 +320,26 @@ export const useConnectionsGame = (
     dispatch({ type: "clearSelection" });
   };
 
-  const onWordDragStart = (wordId: string) => {
-    if (isActionLocked({ requireSolveIdle: true })) {
-      return;
-    }
-    startDragAnim(wordId);
-  };
+  const onWordDragStart = useCallback(
+    (wordId: string) => {
+      if (isActionLocked({ requireSolveIdle: true })) {
+        return;
+      }
+      startDragAnim(wordId);
+    },
+    [isActionLocked, startDragAnim],
+  );
 
-  const onWordDragMove = (targetWordId: string | null) => {
-    moveDragAnim(targetWordId);
-  };
+  const onWordDragMove = useCallback(
+    (targetWordId: string | null) => {
+      moveDragAnim(targetWordId);
+    },
+    [moveDragAnim],
+  );
 
-  const onWordDragEnd = () => {
+  const onWordDragEnd = useCallback(() => {
     endDragAnim();
-  };
+  }, [endDragAnim]);
 
   const dragConfig: WordGridDragConfig = useMemo(
     () => ({

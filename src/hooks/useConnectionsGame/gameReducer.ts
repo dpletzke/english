@@ -71,6 +71,9 @@ type GameAction =
   | RecordMistakeAction
   | ClearSelectionAction;
 
+const withoutWordIds = (selectedIds: Set<string>, wordIds: string[]) =>
+  new Set([...selectedIds].filter((id) => !wordIds.includes(id)));
+
 export const buildInitialState = (
   puzzle: ConnectionsPuzzle,
   persistedResult?: PuzzleResult | null,
@@ -159,6 +162,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       return {
         ...state,
         availableWords: remainingWords,
+        selectedIds: withoutWordIds(state.selectedIds, action.wordIds),
         solvedCategoryIds,
         revealedCategoryIds,
         pendingSolve: null,
@@ -181,6 +185,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       return {
         ...state,
         availableWords: remainingWords,
+        selectedIds: withoutWordIds(state.selectedIds, action.wordIds),
         solvedCategoryIds,
         revealedCategoryIds,
         status: state.status,

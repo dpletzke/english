@@ -191,7 +191,7 @@ describe("gameReducer", () => {
     const [first] = puzzle.categories;
     const firstWordIds = wordIdsForCategory(initial.availableWords, first.id);
 
-    let state = gameReducer(
+    const state = gameReducer(
       buildState({ status: "lost", mistakesRemaining: 0 }),
       {
         type: "completeSolve",
@@ -282,6 +282,24 @@ describe("gameReducer", () => {
 
     expect(state.solvedCategoryIds).toEqual([]);
     expect(state.revealedCategoryIds).toEqual(["easy"]);
+  });
+
+  it("drops solved word ids from the selection when a solve completes", () => {
+    const initial = buildInitialState(createPuzzle());
+    const easyIds = wordIdsForCategory(initial.availableWords, "easy");
+    const otherId = wordIdsForCategory(initial.availableWords, "hard")[0];
+
+    const next = gameReducer(
+      buildState({ selectedIds: new Set([easyIds[0], otherId]) }),
+      {
+        type: "completeSolve",
+        categoryId: "easy",
+        wordIds: easyIds,
+        totalCategoryCount: 4,
+      },
+    );
+
+    expect([...next.selectedIds]).toEqual([otherId]);
   });
 
   it("clears selection", () => {

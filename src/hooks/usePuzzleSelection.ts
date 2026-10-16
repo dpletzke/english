@@ -63,6 +63,8 @@ export const usePuzzleSelection = ({
     activeDateKey ?? selectedDateKey ?? latestAvailable ?? todayDateKey;
   const dateLabelShort = formatPuzzleDateShortLabel(dateLabelKey);
 
+  // progressRevision is a cache-busting key: results live in localStorage, so
+  // the memo must re-read them whenever a progress update event bumps it.
   const dateStatuses = useMemo<Record<string, DateStatus>>(() => {
     const resultsByDateKey = getPuzzleResultsByDateKey();
     return Object.fromEntries(
@@ -71,6 +73,7 @@ export const usePuzzleSelection = ({
         resultsByDateKey[dateKey] ?? "pending",
       ]),
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [availableDates, progressRevision]);
 
   const handleSelectDate = (dateKey: string) => {
